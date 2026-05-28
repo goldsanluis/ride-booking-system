@@ -1,0 +1,24 @@
+[
+    {
+        "booking_id": 1,
+        "user": "gold",
+        "vehicle_type": "Car",
+        "start_location": "g",
+        "end_location": "f",
+        "distance": 10.0,
+        "total_cost": 180.0,
+        "date": "2026-05-28 11:13:35",
+        "status": "Active"
+    },
+    {
+        "booking_id": 2,
+        "user": "gold",
+        "vehicle_type": "Car",
+        "start_location": "manila",
+        "end_location": "japan",
+        "distance": 10.0,
+        "total_cost": 180.0,
+        "date": "2026-05-28 11:14:21",
+        "status": "Active"
+    }
+]
