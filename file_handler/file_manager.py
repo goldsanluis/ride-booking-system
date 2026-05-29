@@ -33,6 +33,13 @@ class FileManager:
     def load_bookings(self):
         try:
             with open(self.filename, "r") as f:
-                return json.load(f)
+                data = json.load(f)
+                return data if data else []
         except (FileNotFoundError, json.JSONDecodeError):
             return []
+
+    def get_next_id(self):
+        bookings = self.load_bookings()
+        if not bookings:
+            return 1
+        return max(b["booking_id"] for b in bookings) + 1

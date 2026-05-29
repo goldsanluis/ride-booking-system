@@ -11,8 +11,9 @@ class MainWindow:
         self.root.geometry("800x600")
         self.root.configure(bg="#1a1a2e")
 
-        self.service = BookingService()
+        # FileManager must be created FIRST before BookingService
         self.file_manager = FileManager()
+        self.service = BookingService(self.file_manager)
 
         self.setup_header()
         self.setup_tabs()
@@ -33,7 +34,12 @@ class MainWindow:
         tab_frame = tk.Frame(self.root, bg="#1a1a2e")
         tab_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
-        self.booking_form = BookingForm(tab_frame, self.service, self.file_manager, self.refresh)
+        self.booking_form = BookingForm(
+            tab_frame,
+            self.service,
+            self.file_manager,
+            self.refresh
+        )
         self.booking_form.frame.pack(side="left", fill="both", expand=True, padx=5)
 
         self.booking_list = BookingList(tab_frame, self.service)
