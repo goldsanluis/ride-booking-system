@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 
 class BookingForm:
-    def __init__(self, parent, service, file_manager, refresh_callback):
+    def __init__(self, parent, service, file_manager, refresh_callback, account):
+        self.account = account
         self.service = service
         self.file_manager = file_manager
         self.refresh_callback = refresh_callback
@@ -84,7 +85,7 @@ class BookingForm:
         return entry
 
     def book_ride(self):
-        user = self.user_entry.get()
+        user = self.account.name
         vehicle_type = self.vehicle_var.get()
         start = self.start_entry.get()
         end = self.end_entry.get()

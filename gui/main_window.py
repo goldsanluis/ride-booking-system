@@ -5,13 +5,13 @@ from services.booking_service import BookingService
 from file_handler.file_manager import FileManager
 
 class MainWindow:
-    def __init__(self):
+    def __init__(self, account):
+        self.account = account
         self.root = tk.Tk()
         self.root.title("Ride Booking System")
         self.root.geometry("800x600")
         self.root.configure(bg="#1a1a2e")
 
-        # FileManager must be created FIRST before BookingService
         self.file_manager = FileManager()
         self.service = BookingService(self.file_manager)
 
@@ -30,6 +30,14 @@ class MainWindow:
             fg="#e94560"
         ).pack()
 
+        tk.Label(
+            header,
+            text=f"Welcome, {self.account.name}! 👋",
+            font=("Helvetica", 11),
+            bg="#16213e",
+            fg="white"
+        ).pack()
+
     def setup_tabs(self):
         tab_frame = tk.Frame(self.root, bg="#1a1a2e")
         tab_frame.pack(fill="both", expand=True, padx=20, pady=10)
@@ -38,7 +46,8 @@ class MainWindow:
             tab_frame,
             self.service,
             self.file_manager,
-            self.refresh
+            self.refresh,
+            self.account
         )
         self.booking_form.frame.pack(side="left", fill="both", expand=True, padx=5)
 

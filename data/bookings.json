@@ -9,5 +9,16 @@
         "total_cost": 96.0,
         "date": "2026-05-29 09:11:10",
         "status": "Cancelled"
+    },
+    {
+        "booking_id": 2,
+        "user": "gold",
+        "vehicle_type": "Car",
+        "start_location": "gold",
+        "end_location": "gold",
+        "distance": 2.0,
+        "total_cost": 68.0,
+        "date": "2026-05-29 09:26:43",
+        "status": "Cancelled"
     }
 ]
