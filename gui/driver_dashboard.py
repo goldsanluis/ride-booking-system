@@ -214,8 +214,9 @@ class DriverDashboard:
                 "Ride Accepted! 🎉",
                 f"You accepted ride from {booking.user}!\nYou will earn ₱{booking.total_cost:.2f} when they complete the ride."
             )
-            
-            # Refresh requests
+
+            # Refresh requests AND header (to update earnings)
+            self.setup_header()
             self.refresh_requests()
 
     def logout(self):

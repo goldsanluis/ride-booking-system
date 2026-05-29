@@ -37,6 +37,7 @@ class BookingForm:
         tk.Label(self.frame, text="Distance (km):", bg="#2d1f00", fg="white").pack(anchor="w")
         self.distance = tk.Entry(self.frame, width=30, bg="#3d2a00", fg="white")
         self.distance.pack(fill="x", pady=5)
+        self.distance.bind("<KeyRelease>", lambda e: self.update_cost())
 
         # Vehicle type
         tk.Label(self.frame, text="Vehicle Type:", bg="#2d1f00", fg="white").pack(anchor="w")

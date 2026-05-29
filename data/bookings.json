@@ -196,11 +196,28 @@
         "total_cost": 54.0,
         "date": "2026-05-29 12:14:35",
         "status": "Completed",
-        "driver_id": "unassigned",
+        "driver_id": null,
         "driver_name": "Unassigned",
         "driver_plate": "Unassigned",
         "driver_rating": 0.0,
         "surge": 1.0,
         "rating": 5
+    },
+    {
+        "booking_id": 13,
+        "user": "gold",
+        "vehicle_type": "Car",
+        "start_location": "g",
+        "end_location": "f",
+        "distance": 5.0,
+        "total_cost": 110.0,
+        "date": "2026-05-29 12:22:51",
+        "status": "Completed",
+        "driver_id": "unassigned",
+        "driver_name": "Unassigned",
+        "driver_plate": "Unassigned",
+        "driver_rating": 0.0,
+        "surge": 1.0,
+        "rating": 1
     }
 ]
