@@ -48,9 +48,14 @@ class BookingService:
     def get_all_bookings(self):
         return self.bookings
 
-    def cancel_booking(self, booking_id):
+    def get_user_bookings(self, username):
+        return [b for b in self.bookings if b.user == username]
+
+    def cancel_booking(self, booking_id, username):
         for booking in self.bookings:
             if booking.booking_id == booking_id:
+                if booking.user != username:
+                    return "You can only cancel your own bookings!"
                 booking.cancel()
                 return f"Booking #{booking_id} cancelled successfully!"
         return "Booking not found!"

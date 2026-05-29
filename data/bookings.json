@@ -20,5 +20,16 @@
         "total_cost": 68.0,
         "date": "2026-05-29 09:26:43",
         "status": "Cancelled"
+    },
+    {
+        "booking_id": 3,
+        "user": "gold",
+        "vehicle_type": "Bike",
+        "start_location": "gold",
+        "end_location": "drixx",
+        "distance": 20.0,
+        "total_cost": 180.0,
+        "date": "2026-05-29 09:36:57",
+        "status": "Cancelled"
     }
 ]

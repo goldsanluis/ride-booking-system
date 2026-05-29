@@ -22,13 +22,30 @@ class MainWindow:
         header = tk.Frame(self.root, bg="#16213e", pady=10)
         header.pack(fill="x")
 
+        # Title and welcome
+        title_frame = tk.Frame(header, bg="#16213e")
+        title_frame.pack(fill="x", padx=20)
+
         tk.Label(
-            header,
+            title_frame,
             text="🚗 Ride Booking System",
             font=("Helvetica", 20, "bold"),
             bg="#16213e",
             fg="#e94560"
-        ).pack()
+        ).pack(side="left")
+
+        # Logout button
+        tk.Button(
+            title_frame,
+            text="Logout 🚪",
+            font=("Helvetica", 10, "bold"),
+            bg="#e94560",
+            fg="white",
+            relief="flat",
+            padx=10,
+            pady=5,
+            command=self.logout
+        ).pack(side="right")
 
         tk.Label(
             header,
@@ -51,11 +68,25 @@ class MainWindow:
         )
         self.booking_form.frame.pack(side="left", fill="both", expand=True, padx=5)
 
-        self.booking_list = BookingList(tab_frame, self.service)
+        self.booking_list = BookingList(tab_frame, self.service, self.account)
         self.booking_list.frame.pack(side="right", fill="both", expand=True, padx=5)
 
     def refresh(self):
         self.booking_list.refresh()
+
+    def logout(self):
+        from tkinter import messagebox
+        confirm = messagebox.askyesno("Logout", "Are you sure you want to logout?")
+        if confirm:
+            self.root.destroy()
+            # Restart login
+            from gui.login_window import LoginWindow
+            from gui.main_window import MainWindow
+            login = LoginWindow()
+            account = login.run()
+            if account:
+                app = MainWindow(account)
+                app.run()
 
     def run(self):
         self.root.mainloop()

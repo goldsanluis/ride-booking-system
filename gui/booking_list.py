@@ -2,8 +2,9 @@ import tkinter as tk
 from tkinter import messagebox
 
 class BookingList:
-    def __init__(self, parent, service):
+    def __init__(self, parent, service, account):
         self.service = service
+        self.account = account
         self.selected_booking_id = None
         self.card_frames = {}
 
@@ -11,7 +12,7 @@ class BookingList:
 
         tk.Label(
             self.frame,
-            text="All Bookings",
+            text="My Bookings",
             font=("Helvetica", 16, "bold"),
             bg="#16213e",
             fg="#e94560"
@@ -53,7 +54,9 @@ class BookingList:
             widget.destroy()
         self.selected_booking_id = None
         self.card_frames = {}
-        bookings = self.service.get_all_bookings()
+
+        # Only show current user's bookings
+        bookings = self.service.get_user_bookings(self.account.name)
 
         if not bookings:
             tk.Label(
@@ -111,10 +114,8 @@ class BookingList:
                 frame.configure(bg="#e94560" if booking.status == "Active" else "gray")
         border_frame.configure(bg="white")
         self.selected_booking_id = booking_id
-        print(f"Selected booking: {self.selected_booking_id}")
 
     def cancel_booking(self):
-        print(f"Attempting to cancel booking: {self.selected_booking_id}")
         if not self.selected_booking_id:
             messagebox.showerror("Error", "Please select a booking first!")
             return
@@ -130,7 +131,7 @@ class BookingList:
 
         confirm = messagebox.askyesno("Confirm", f"Cancel Booking #{self.selected_booking_id}?")
         if confirm:
-            result = self.service.cancel_booking(self.selected_booking_id)
+            result = self.service.cancel_booking(self.selected_booking_id, self.account.name)
             self.service.file_manager.save_bookings(self.service.get_all_bookings())
             messagebox.showinfo("Result", result)
             self.refresh()
