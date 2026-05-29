@@ -3,6 +3,7 @@
         "user_id": 1,
         "username": "gold",
         "password": "gold",
-        "name": "gold"
+        "name": "gold",
+        "wallet_balance": 5766.0
     }
 ]

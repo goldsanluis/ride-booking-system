@@ -1,141 +1,180 @@
-import tkinter as tk
+﻿import tkinter as tk
 from tkinter import messagebox
+from models.car import Car
+from models.van import Van
+from models.bike import Bike
 
 class BookingForm:
-    def __init__(self, parent, service, file_manager, refresh_callback, account):
+    def __init__(self, parent, service, file_manager, refresh_callback, account, account_manager):
         self.service = service
         self.file_manager = file_manager
         self.refresh_callback = refresh_callback
         self.account = account
+        self.account_manager = account_manager
 
-        self.frame = tk.Frame(parent, bg="#2d1f00", padx=10, pady=10)
+        self.frame = tk.Frame(parent, bg="#2d1f00", padx=15, pady=15)
 
+        # Title
         tk.Label(
             self.frame,
-            text="Book a Ride",
-            font=("Helvetica", 16, "bold"),
+            text="📍 Book a Ride",
+            font=("Helvetica", 14, "bold"),
             bg="#2d1f00",
             fg="#FFD700"
         ).pack(pady=10)
 
-        # Vehicle Type
-        self.create_label("Vehicle Type:")
+        # Start location
+        tk.Label(self.frame, text="From:", bg="#2d1f00", fg="white").pack(anchor="w")
+        self.start_location = tk.Entry(self.frame, width=30, bg="#3d2a00", fg="white")
+        self.start_location.pack(fill="x", pady=5)
+
+        # End location
+        tk.Label(self.frame, text="To:", bg="#2d1f00", fg="white").pack(anchor="w")
+        self.end_location = tk.Entry(self.frame, width=30, bg="#3d2a00", fg="white")
+        self.end_location.pack(fill="x", pady=5)
+
+        # Distance
+        tk.Label(self.frame, text="Distance (km):", bg="#2d1f00", fg="white").pack(anchor="w")
+        self.distance = tk.Entry(self.frame, width=30, bg="#3d2a00", fg="white")
+        self.distance.pack(fill="x", pady=5)
+
+        # Vehicle type
+        tk.Label(self.frame, text="Vehicle Type:", bg="#2d1f00", fg="white").pack(anchor="w")
         self.vehicle_var = tk.StringVar(value="Car")
-        vehicle_frame = tk.Frame(self.frame, bg="#2d1f00")
-        vehicle_frame.pack(fill="x", pady=2)
-        for vehicle in ["Car", "Van", "Bike"]:
+        vehicles = ["Bike", "Car", "Van"]
+        for vehicle in vehicles:
             tk.Radiobutton(
-                vehicle_frame,
+                self.frame,
                 text=vehicle,
                 variable=self.vehicle_var,
                 value=vehicle,
                 bg="#2d1f00",
                 fg="white",
-                selectcolor="#B8860B",
-                activebackground="#2d1f00",
-                activeforeground="#FFD700",
-                font=("Helvetica", 11)
-            ).pack(side="left", padx=5)
-
-        # Start Location
-        self.create_label("Start Location:")
-        self.start_entry = self.create_entry()
-
-        # End Location
-        self.create_label("End Location:")
-        self.end_entry = self.create_entry()
-
-        # Distance
-        self.create_label("Distance (km):")
-        self.distance_entry = self.create_entry()
-
-        # Pricing info
-        pricing_frame = tk.Frame(self.frame, bg="#3d2a00", padx=8, pady=8)
-        pricing_frame.pack(fill="x", pady=10)
-
-        tk.Label(
-            pricing_frame,
-            text="💰 Pricing Info",
-            font=("Helvetica", 10, "bold"),
-            bg="#3d2a00",
-            fg="#FFD700"
-        ).pack(anchor="w")
-
-        for text in ["🚗 Car: ₱40 base + ₱14/km",
-                     "🚐 Van: ₱80 base + ₱20/km",
-                     "🏍️ Bike: ₱20 base + ₱8/km",
-                     "🚀 Surge: 1.5x (7-9AM, 5-8PM)"]:
-            tk.Label(
-                pricing_frame,
-                text=text,
-                font=("Helvetica", 9),
-                bg="#3d2a00",
-                fg="#FFA500"
+                selectcolor="#FFD700",
+                command=self.update_cost
             ).pack(anchor="w")
 
-        # Book Button
-        tk.Button(
+        # Cost display
+        self.cost_label = tk.Label(
             self.frame,
-            text="Book Ride 🚗",
-            font=("Helvetica", 12, "bold"),
-            bg="#FFD700",
-            fg="#1a1200",
-            relief="flat",
-            padx=10,
-            pady=8,
-            cursor="hand2",
-            command=self.book_ride
-        ).pack(pady=15, fill="x")
-
-    def create_label(self, text):
-        tk.Label(
-            self.frame,
-            text=text,
-            font=("Helvetica", 11),
+            text="Estimated Cost: ₱0.00",
+            font=("Helvetica", 11, "bold"),
             bg="#2d1f00",
             fg="#FFA500"
-        ).pack(anchor="w", pady=2)
-
-    def create_entry(self):
-        entry = tk.Entry(
-            self.frame,
-            font=("Helvetica", 11),
-            bg="#3d2a00",
-            fg="white",
-            insertbackground="#FFD700",
-            relief="flat",
-            bd=5
         )
-        entry.pack(fill="x", pady=2)
-        return entry
+        self.cost_label.pack(pady=10)
+
+        # Book button
+        tk.Button(
+            self.frame,
+            text="✅ Book Ride",
+            font=("Helvetica", 12, "bold"),
+            bg="#4ecca3",
+            fg="white",
+            relief="flat",
+            padx=15,
+            pady=10,
+            cursor="hand2",
+            command=self.book_ride
+        ).pack(fill="x", pady=10)
+
+    def update_cost(self):
+        try:
+            distance = float(self.distance.get()) if self.distance.get() else 0
+            vehicle_type = self.vehicle_var.get()
+            
+            # Get vehicle costs
+            vehicles = {
+                "Bike": (20, 8),      # base, per_km
+                "Car": (40, 14),
+                "Van": (80, 20)
+            }
+            
+            base, per_km = vehicles[vehicle_type]
+            cost = base + (per_km * distance)
+            
+            # Check surge pricing (peak hours)
+            from datetime import datetime
+            hour = datetime.now().hour
+            if (7 <= hour <= 9) or (17 <= hour <= 20):
+                cost *= 1.5
+                self.cost_label.config(text=f"Estimated Cost: ₱{cost:.2f} (1.5x surge)")
+            else:
+                self.cost_label.config(text=f"Estimated Cost: ₱{cost:.2f}")
+        except:
+            self.cost_label.config(text="Estimated Cost: ₱0.00")
 
     def book_ride(self):
-        vehicle_type = self.vehicle_var.get()
-        start = self.start_entry.get()
-        end = self.end_entry.get()
+        # Validate inputs
+        if not self.start_location.get() or not self.end_location.get() or not self.distance.get():
+            messagebox.showerror("Error", "Please fill all fields!")
+            return
 
         try:
-            distance = float(self.distance_entry.get())
+            distance = float(self.distance.get())
+            if distance <= 0:
+                messagebox.showerror("Error", "Distance must be greater than 0!")
+                return
         except ValueError:
-            messagebox.showerror("Error", "Please enter a valid distance!")
+            messagebox.showerror("Error", "Distance must be a number!")
             return
 
-        if not all([start, end]):
-            messagebox.showerror("Error", "Please fill in all fields!")
+        # Calculate cost
+        vehicle_type = self.vehicle_var.get()
+        vehicles = {
+            "Bike": (20, 8),
+            "Car": (40, 14),
+            "Van": (80, 20)
+        }
+        base, per_km = vehicles[vehicle_type]
+        cost = base + (per_km * distance)
+
+        # Check surge
+        from datetime import datetime
+        hour = datetime.now().hour
+        if (7 <= hour <= 9) or (17 <= hour <= 20):
+            cost *= 1.5
+
+        # CHECK WALLET BALANCE
+        if self.account.wallet_balance < cost:
+            messagebox.showerror(
+                "Insufficient Balance",
+                f"Your balance: ₱{self.account.wallet_balance:.2f}\nCost: ₱{cost:.2f}\n\nPlease add money to your wallet!"
+            )
             return
 
-        user = self.account.name
-        booking = self.service.book_ride(user, vehicle_type, start, end, distance)
-        self.file_manager.save_bookings(self.service.get_all_bookings())
+        # Book the ride
+        booking = self.service.book_ride(
+            self.account.username,
+            vehicle_type,
+            self.start_location.get(),
+            self.end_location.get(),
+            distance
+        )
 
-        surge_text = f"\n🚀 Surge pricing applied! ({booking.surge}x)" if booking.surge > 1.0 else ""
-        messagebox.showinfo("Booking Confirmed! 🎉",
-                          f"Ride booked successfully!\n"
-                          f"Driver: {booking.driver.name}\n"
-                          f"Plate: {booking.driver.plate}\n"
-                          f"Total Cost: ₱{booking.total_cost:.2f}{surge_text}")
+        if booking:
+            # DEDUCT FROM WALLET
+            self.account.wallet_balance -= cost
+            accounts = self.account_manager.load_accounts()
+            for acc in accounts:
+                if acc["username"] == self.account.username:
+                    acc["wallet_balance"] = self.account.wallet_balance
+                    break
+            self.account_manager.save_accounts(accounts)
 
-        self.start_entry.delete(0, tk.END)
-        self.end_entry.delete(0, tk.END)
-        self.distance_entry.delete(0, tk.END)
-        self.refresh_callback()
+            # Save booking and refresh
+            self.file_manager.save_bookings(self.service.get_all_bookings())
+            
+            messagebox.showinfo(
+                "Success",
+                f"Ride booked! 🎉\n\nCost: ₱{cost:.2f}\nRemaining balance: ₱{self.account.wallet_balance:.2f}"
+            )
+
+            # Clear form
+            self.start_location.delete(0, tk.END)
+            self.end_location.delete(0, tk.END)
+            self.distance.delete(0, tk.END)
+            
+            self.refresh_callback()
+        else:
+            messagebox.showerror("Error", "Failed to book ride!")

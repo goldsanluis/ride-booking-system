@@ -1,60 +1,42 @@
-import json
+﻿import json
 import os
 
 class DriverManager:
-    def __init__(self):
-        self.drivers_file = "data/drivers.json"
-        self.drivers = self.load_drivers()
+    def __init__(self, filename="data/drivers.json"):
+        self.filename = filename
+        self.ensure_file_exists()
+
+    def ensure_file_exists(self):
+        if not os.path.exists("data"):
+            os.makedirs("data")
+        if not os.path.exists(self.filename):
+            with open(self.filename, "w") as f:
+                json.dump({"drivers": []}, f)
 
     def load_drivers(self):
-        if os.path.exists(self.drivers_file):
-            with open(self.drivers_file, 'r') as f:
+        try:
+            with open(self.filename, "r") as f:
                 data = json.load(f)
-                return data.get('drivers', [])
-        return []
+                return data.get("drivers", [])
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
 
-    def save_drivers(self):
-        with open(self.drivers_file, 'w') as f:
-            json.dump({'drivers': self.drivers}, f, indent=2)
+    def save_drivers(self, drivers):
+        with open(self.filename, "w") as f:
+            json.dump({"drivers": drivers}, f, indent=4)
 
-    def login(self, username, password):
-        for driver in self.drivers:
-            if driver['username'] == username and driver['password'] == password:
-                return driver, "Login successful!"
-        return None, "Invalid username or password!"
-
-    def register(self, username, password, name, phone, plate, vehicle_type):
-        for driver in self.drivers:
-            if driver['username'] == username:
-                return None, "Username already exists!"
-        
-        new_driver = {
-            "driver_id": f"D{len(self.drivers) + 1:03d}",
-            "username": username,
-            "password": password,
-            "name": name,
-            "phone": phone,
-            "plate": plate,
-            "vehicle_type": vehicle_type,
-            "rating": 5.0,
-            "total_rides": 0,
-            "status": "offline"
-        }
-        
-        self.drivers.append(new_driver)
-        self.save_drivers()
-        return new_driver, "Registration successful!"
-
-    def update_driver_status(self, driver_id, status):
-        for driver in self.drivers:
-            if driver['driver_id'] == driver_id:
-                driver['status'] = status
-                self.save_drivers()
-                return True
-        return False
-
-    def get_driver_by_id(self, driver_id):
-        for driver in self.drivers:
-            if driver['driver_id'] == driver_id:
+    def get_driver(self, username, password):
+        drivers = self.load_drivers()
+        for driver in drivers:
+            if driver["username"] == username and driver["password"] == password:
                 return driver
         return None
+
+    def update_driver_wallet(self, driver_id, amount):
+        drivers = self.load_drivers()
+        for driver in drivers:
+            if driver["driver_id"] == driver_id:
+                driver["wallet_balance"] = driver.get("wallet_balance", 0.0) + amount
+                self.save_drivers(drivers)
+                return True
+        return False

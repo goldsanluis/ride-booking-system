@@ -1,13 +1,11 @@
-import json
+﻿import json
 import os
+from models.account import Account
 
 class AccountManager:
     def __init__(self, filename="data/accounts.json"):
         self.filename = filename
-        self.accounts = []
-        self.next_id = 1
         self.ensure_file_exists()
-        self.load_accounts()
 
     def ensure_file_exists(self):
         if not os.path.exists("data"):
@@ -19,49 +17,55 @@ class AccountManager:
     def load_accounts(self):
         try:
             with open(self.filename, "r") as f:
-                data = json.load(f)
-                from models.account import Account
-                for item in data:
-                    account = Account(
-                        item["user_id"],
-                        item["username"],
-                        item["password"],
-                        item["name"]
-                    )
-                    self.accounts.append(account)
-                if self.accounts:
-                    self.next_id = max(a.user_id for a in self.accounts) + 1
+                return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
-            self.accounts = []
+            return []
 
-    def save_accounts(self):
-        data = []
-        for account in self.accounts:
-            data.append({
-                "user_id": account.user_id,
-                "username": account.username,
-                "password": account.password,
-                "name": account.name
-            })
+    def save_accounts(self, accounts):
         with open(self.filename, "w") as f:
-            json.dump(data, f, indent=4)
+            json.dump(accounts, f, indent=4)
 
     def register(self, username, password, name):
-        # Check if username already exists
-        for account in self.accounts:
-            if account.username == username:
-                return None, "Username already exists!"
-        from models.account import Account
-        account = Account(self.next_id, username, password, name)
-        self.accounts.append(account)
-        self.next_id += 1
-        self.save_accounts()
-        return account, "Account created successfully!"
+        accounts = self.load_accounts()
+        
+        # Check if username exists
+        for acc in accounts:
+            if acc["username"] == username:
+                return False, "Username already exists!"
+        
+        # Create new account with wallet
+        new_id = max([acc["user_id"] for acc in accounts], default=0) + 1
+        new_account = {
+            "user_id": new_id,
+            "username": username,
+            "password": password,
+            "name": name,
+            "wallet_balance": 5000.0
+        }
+        
+        accounts.append(new_account)
+        self.save_accounts(accounts)
+        return True, "Account created successfully!"
 
     def login(self, username, password):
-        for account in self.accounts:
-            if account.username == username:
-                if account.check_password(password):
-                    return account, "Login successful!"
-                return None, "Incorrect password!"
-        return None, "Username not found!"
+        accounts = self.load_accounts()
+        for acc in accounts:
+            if acc["username"] == username and acc["password"] == password:
+                account = Account(
+                    acc["user_id"],
+                    acc["username"],
+                    acc["password"],
+                    acc["name"],
+                    acc.get("wallet_balance", 5000.0)
+                )
+                return account, "Login successful!"
+        return None, "Invalid username or password!"
+
+    def update_account(self, account):
+        accounts = self.load_accounts()
+        for acc in accounts:
+            if acc["username"] == account.username:
+                acc["wallet_balance"] = account.wallet_balance
+                self.save_accounts(accounts)
+                return True
+        return False

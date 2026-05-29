@@ -1,28 +1,29 @@
 {
-  "drivers": [
-    {
-      "driver_id": "D001",
-      "username": "driver",
-      "password": "password123",
-      "name": "You (Driver)",
-      "phone": "09123456789",
-      "plate": "ABC-1234",
-      "vehicle_type": "Car",
-      "rating": 5.0,
-      "total_rides": 0,
-      "status": "offline"
-    },
-    {
-      "driver_id": "D002",
-      "username": "Drixx",
-      "password": "drixx",
-      "name": "Zyrill",
-      "phone": "123456789",
-      "plate": "123456",
-      "vehicle_type": "Car",
-      "rating": 5.0,
-      "total_rides": 0,
-      "status": "offline"
-    }
-  ]
+    "drivers": [
+        {
+            "driver_id": "D001",
+            "username": "driver",
+            "password": "password123",
+            "name": "You (Driver)",
+            "phone": "09123456789",
+            "plate": "ABC-1234",
+            "vehicle_type": "Car",
+            "rating": 5.0,
+            "total_rides": 0,
+            "status": "offline"
+        },
+        {
+            "driver_id": "D002",
+            "username": "Drixx",
+            "password": "drixx",
+            "name": "Zyrill",
+            "phone": "123456789",
+            "plate": "123456",
+            "vehicle_type": "Car",
+            "rating": 5.0,
+            "total_rides": 0,
+            "status": "offline",
+            "wallet_balance": 180.0
+        }
+    ]
 }

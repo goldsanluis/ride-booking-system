@@ -1,4 +1,4 @@
-import random
+﻿import random
 
 class Driver:
     DRIVERS = [
@@ -12,7 +12,8 @@ class Driver:
         {"name": "Liza Cruz", "plate": "STU 0123", "rating": 4.7},
     ]
 
-    def __init__(self, name, plate, rating):
+    def __init__(self, name, plate, rating, driver_id=None):
+        self.driver_id = driver_id
         self.name = name
         self.plate = plate
         self.rating = rating

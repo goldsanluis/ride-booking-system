@@ -26,6 +26,7 @@ class FileManager:
                 "total_cost": booking.total_cost,
                 "date": booking.date,
                 "status": booking.status,
+                "driver_id": booking.driver.driver_id,
                 "driver_name": booking.driver.name,
                 "driver_plate": booking.driver.plate,
                 "driver_rating": booking.driver.rating,

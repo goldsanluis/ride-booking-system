@@ -1,7 +1,9 @@
-import tkinter as tk
+﻿import tkinter as tk
 from tkinter import messagebox
 from services.booking_service import BookingService
 from file_handler.file_manager import FileManager
+from file_handler.driver_manager import DriverManager
+from models.driver import Driver
 
 # Gold Theme Colors
 BG_DARK     = "#1a1200"
@@ -18,10 +20,11 @@ class DriverDashboard:
         self.driver = driver
         self.root = tk.Tk()
         self.root.title("Ride Booking System - Driver Dashboard")
-        self.root.geometry("900x600")
+        self.root.geometry("900x650")
         self.root.configure(bg=BG_DARK)
 
         self.file_manager = FileManager()
+        self.driver_manager = DriverManager()
         self.service = BookingService(self.file_manager)
 
         self.setup_header()
@@ -58,6 +61,16 @@ class DriverDashboard:
             bg=BG_CARD,
             fg=GOLD_ACCENT
         ).pack(side="left")
+
+        # Earnings display
+        earnings = self.driver.get("wallet_balance", 0.0)
+        tk.Label(
+            info_frame,
+            text=f"💰 Earnings: ₱{earnings:.2f}",
+            font=("Helvetica", 11, "bold"),
+            bg=BG_CARD,
+            fg="#4ecca3"
+        ).pack(side="left", padx=20)
 
         # Logout button
         tk.Button(
@@ -186,13 +199,23 @@ class DriverDashboard:
         )
         
         if confirm:
-            # Update booking with this driver
-            booking.driver = self.driver
+            # Convert driver dict to Driver object
+            booking.driver = Driver(
+                self.driver['name'],
+                self.driver['plate'],
+                self.driver['rating'],
+                driver_id=self.driver['driver_id']
+            )
+            
+            # Save booking
             self.file_manager.save_bookings(self.service.get_all_bookings())
+            
             messagebox.showinfo(
                 "Ride Accepted! 🎉",
-                f"You accepted ride from {booking.user}!\nProfit: ₱{booking.total_cost:.2f}"
+                f"You accepted ride from {booking.user}!\nYou will earn ₱{booking.total_cost:.2f} when they complete the ride."
             )
+            
+            # Refresh requests
             self.refresh_requests()
 
     def logout(self):

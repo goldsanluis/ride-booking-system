@@ -11,7 +11,7 @@ class Booking:
         self.distance = distance
         self.date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.status = "Active"
-        self.driver = Driver("Unassigned", "Unassigned", 0.0)
+        self.driver = Driver("Unassigned", "Unassigned", 0.0, driver_id="unassigned")
         self.rating = None
         self.surge = self.check_surge()
         self.total_cost = self.calculate_total_cost()
