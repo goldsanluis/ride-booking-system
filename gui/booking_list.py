@@ -29,17 +29,57 @@ class BookingList:
         self.inner_frame.bind("<Configure>", self.on_frame_configure)
         self.canvas.bind("<Configure>", self.on_canvas_configure)
 
+        # Buttons frame
+        btn_frame = tk.Frame(self.frame, bg="#16213e")
+        btn_frame.pack(fill="x", pady=5)
+
         tk.Button(
-            self.frame,
-            text="Cancel Booking ❌",
-            font=("Helvetica", 12, "bold"),
+            btn_frame,
+            text="Receipt 🧾",
+            font=("Helvetica", 10, "bold"),
+            bg="#0f3460",
+            fg="white",
+            relief="flat",
+            padx=5,
+            pady=5,
+            command=self.show_receipt
+        ).pack(side="left", fill="x", expand=True, padx=2)
+
+        tk.Button(
+            btn_frame,
+            text="Complete ✅",
+            font=("Helvetica", 10, "bold"),
+            bg="#0f3460",
+            fg="white",
+            relief="flat",
+            padx=5,
+            pady=5,
+            command=self.complete_booking
+        ).pack(side="left", fill="x", expand=True, padx=2)
+
+        tk.Button(
+            btn_frame,
+            text="Rate ⭐",
+            font=("Helvetica", 10, "bold"),
+            bg="#0f3460",
+            fg="white",
+            relief="flat",
+            padx=5,
+            pady=5,
+            command=self.rate_booking
+        ).pack(side="left", fill="x", expand=True, padx=2)
+
+        tk.Button(
+            btn_frame,
+            text="Cancel ❌",
+            font=("Helvetica", 10, "bold"),
             bg="#e94560",
             fg="white",
             relief="flat",
-            padx=10,
+            padx=5,
             pady=5,
             command=self.cancel_booking
-        ).pack(pady=10, fill="x")
+        ).pack(side="left", fill="x", expand=True, padx=2)
 
         self.refresh()
 
@@ -55,7 +95,6 @@ class BookingList:
         self.selected_booking_id = None
         self.card_frames = {}
 
-        # Only show current user's bookings
         bookings = self.service.get_user_bookings(self.account.name)
 
         if not bookings:
@@ -72,8 +111,15 @@ class BookingList:
             self.create_booking_card(booking)
 
     def create_booking_card(self, booking):
-        card_color = "#0f3460" if booking.status == "Active" else "#2d2d2d"
-        border_color = "#e94560" if booking.status == "Active" else "gray"
+        if booking.status == "Active":
+            card_color = "#0f3460"
+            border_color = "#e94560"
+        elif booking.status == "Completed":
+            card_color = "#1a4a1a"
+            border_color = "#4ecca3"
+        else:
+            card_color = "#2d2d2d"
+            border_color = "gray"
 
         border_frame = tk.Frame(
             self.inner_frame,
@@ -86,15 +132,21 @@ class BookingList:
         card = tk.Frame(border_frame, bg=card_color, padx=10, pady=8, cursor="hand2")
         card.pack(fill="x")
 
+        surge_text = f" 🚀 SURGE {booking.surge}x" if booking.surge > 1.0 else ""
+        rating_text = f"⭐{booking.rating}" if booking.rating else "Not rated"
+
         labels = [
-            (f"Booking #{booking.booking_id}", "Helvetica 11 bold", "#e94560"),
+            (f"Booking #{booking.booking_id}{surge_text}", "Helvetica 11 bold", "#e94560"),
             (f"👤 {booking.user}", "Helvetica 10", "white"),
             (f"🚗 {booking.vehicle.name}", "Helvetica 10", "white"),
+            (f"🧑‍✈️ Driver: {booking.driver.name} | {booking.driver.plate}", "Helvetica 10", "white"),
+            (f"⭐ Driver Rating: {booking.driver.rating}", "Helvetica 10", "white"),
             (f"📍 {booking.start_location} → {booking.end_location}", "Helvetica 10", "white"),
             (f"📏 {booking.distance} km", "Helvetica 10", "white"),
             (f"💰 ₱{booking.total_cost:.2f}", "Helvetica 10 bold", "#4ecca3"),
             (f"📅 {booking.date}", "Helvetica 9", "gray"),
             (f"● {booking.status}", "Helvetica 10 bold", "#4ecca3" if booking.status == "Active" else "gray"),
+            (f"Your Rating: {rating_text}", "Helvetica 10", "#4ecca3" if booking.rating else "gray"),
         ]
 
         for text, font, color in labels:
@@ -111,24 +163,160 @@ class BookingList:
         for bid, frame in self.card_frames.items():
             booking = self.service.find_booking_by_id(bid)
             if booking:
-                frame.configure(bg="#e94560" if booking.status == "Active" else "gray")
+                if booking.status == "Active":
+                    frame.configure(bg="#e94560")
+                elif booking.status == "Completed":
+                    frame.configure(bg="#4ecca3")
+                else:
+                    frame.configure(bg="gray")
         border_frame.configure(bg="white")
         self.selected_booking_id = booking_id
 
-    def cancel_booking(self):
+    def get_selected(self):
         if not self.selected_booking_id:
             messagebox.showerror("Error", "Please select a booking first!")
-            return
-
+            return None
         booking = self.service.find_booking_by_id(self.selected_booking_id)
         if not booking:
             messagebox.showerror("Error", "Booking not found!")
+            return None
+        return booking
+
+    def show_receipt(self):
+        booking = self.get_selected()
+        if not booking:
             return
 
-        if booking.status == "Cancelled":
-            messagebox.showerror("Error", "This booking is already cancelled!")
+        receipt = tk.Toplevel()
+        receipt.title(f"Receipt - Booking #{booking.booking_id}")
+        receipt.geometry("350x450")
+        receipt.configure(bg="#1a1a2e")
+        receipt.resizable(False, False)
+
+        tk.Label(receipt, text="🧾 BOOKING RECEIPT",
+                font=("Helvetica", 14, "bold"),
+                bg="#1a1a2e", fg="#e94560").pack(pady=10)
+
+        tk.Label(receipt, text="─" * 40,
+                bg="#1a1a2e", fg="gray").pack()
+
+        surge_text = f"(Surge {booking.surge}x applied)" if booking.surge > 1.0 else ""
+        rating_text = f"⭐{booking.rating}" if booking.rating else "Not yet rated"
+
+        details = [
+            ("Booking ID", f"#{booking.booking_id}"),
+            ("Passenger", booking.user),
+            ("Vehicle", booking.vehicle.name),
+            ("Driver", booking.driver.name),
+            ("Plate No.", booking.driver.plate),
+            ("From", booking.start_location),
+            ("To", booking.end_location),
+            ("Distance", f"{booking.distance} km"),
+            ("Base Cost", f"₱{booking.vehicle.calculate_cost(booking.distance):.2f}"),
+            ("Surge", surge_text if surge_text else "None"),
+            ("Total Cost", f"₱{booking.total_cost:.2f}"),
+            ("Date", booking.date),
+            ("Status", booking.status),
+            ("Your Rating", rating_text),
+        ]
+
+        for label, value in details:
+            row = tk.Frame(receipt, bg="#16213e", padx=10, pady=3)
+            row.pack(fill="x", padx=20, pady=1)
+            tk.Label(row, text=label, font=("Helvetica", 10),
+                    bg="#16213e", fg="gray", width=12, anchor="w").pack(side="left")
+            tk.Label(row, text=value, font=("Helvetica", 10, "bold"),
+                    bg="#16213e", fg="white", anchor="w").pack(side="left")
+
+        tk.Button(receipt, text="Close",
+                font=("Helvetica", 11, "bold"),
+                bg="#e94560", fg="white", relief="flat",
+                command=receipt.destroy).pack(pady=15)
+
+    def complete_booking(self):
+        booking = self.get_selected()
+        if not booking:
+            return
+        if booking.status != "Active":
+            messagebox.showerror("Error", "Only active bookings can be completed!")
+            return
+        confirm = messagebox.askyesno("Confirm", f"Mark Booking #{booking.booking_id} as completed?")
+        if confirm:
+            result = self.service.complete_booking(self.selected_booking_id, self.account.name)
+            self.service.file_manager.save_bookings(self.service.get_all_bookings())
+            messagebox.showinfo("Result", result)
+            self.refresh()
+
+    def rate_booking(self):
+        booking = self.get_selected()
+        if not booking:
+            return
+        if booking.status != "Completed":
+            messagebox.showerror("Error", "You can only rate completed bookings!")
+            return
+        if booking.rating:
+            messagebox.showerror("Error", "You already rated this booking!")
             return
 
+        # Rating window
+        rate_window = tk.Toplevel()
+        rate_window.title("Rate your ride")
+        rate_window.geometry("300x250")
+        rate_window.configure(bg="#1a1a2e")
+        rate_window.resizable(False, False)
+
+        tk.Label(rate_window, text="⭐ Rate Your Ride",
+                font=("Helvetica", 14, "bold"),
+                bg="#1a1a2e", fg="#e94560").pack(pady=15)
+
+        tk.Label(rate_window, text=f"Driver: {booking.driver.name}",
+                font=("Helvetica", 11),
+                bg="#1a1a2e", fg="white").pack()
+
+        tk.Label(rate_window, text="Select Rating:",
+                font=("Helvetica", 11),
+                bg="#1a1a2e", fg="white").pack(pady=10)
+
+        rating_var = tk.IntVar(value=5)
+
+        stars_frame = tk.Frame(rate_window, bg="#1a1a2e")
+        stars_frame.pack()
+
+        for i in range(1, 6):
+            tk.Radiobutton(
+                stars_frame,
+                text=f"{'⭐' * i}",
+                variable=rating_var,
+                value=i,
+                bg="#1a1a2e",
+                fg="white",
+                selectcolor="#e94560",
+                font=("Helvetica", 11)
+            ).pack(anchor="w")
+
+        def submit_rating():
+            result = self.service.rate_booking(
+                self.selected_booking_id,
+                self.account.name,
+                rating_var.get()
+            )
+            self.service.file_manager.save_bookings(self.service.get_all_bookings())
+            messagebox.showinfo("Result", result)
+            rate_window.destroy()
+            self.refresh()
+
+        tk.Button(rate_window, text="Submit Rating",
+                font=("Helvetica", 11, "bold"),
+                bg="#e94560", fg="white", relief="flat",
+                command=submit_rating).pack(pady=15)
+
+    def cancel_booking(self):
+        booking = self.get_selected()
+        if not booking:
+            return
+        if booking.status != "Active":
+            messagebox.showerror("Error", "Only active bookings can be cancelled!")
+            return
         confirm = messagebox.askyesno("Confirm", f"Cancel Booking #{self.selected_booking_id}?")
         if confirm:
             result = self.service.cancel_booking(self.selected_booking_id, self.account.name)

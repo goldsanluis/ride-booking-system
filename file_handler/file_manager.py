@@ -25,7 +25,12 @@ class FileManager:
                 "distance": booking.distance,
                 "total_cost": booking.total_cost,
                 "date": booking.date,
-                "status": booking.status
+                "status": booking.status,
+                "driver_name": booking.driver.name,
+                "driver_plate": booking.driver.plate,
+                "driver_rating": booking.driver.rating,
+                "surge": booking.surge,
+                "rating": booking.rating
             })
         with open(self.filename, "w") as f:
             json.dump(data, f, indent=4)

@@ -2,6 +2,7 @@ from models.booking import Booking
 from models.car import Car
 from models.van import Van
 from models.bike import Bike
+from models.driver import Driver
 
 class BookingService:
     def __init__(self, file_manager):
@@ -34,6 +35,14 @@ class BookingService:
                 booking.total_cost = item["total_cost"]
                 booking.date = item["date"]
                 booking.status = item["status"]
+                booking.surge = item.get("surge", 1.0)
+                booking.rating = item.get("rating", None)
+                # Restore driver
+                booking.driver = Driver(
+                    item.get("driver_name", "Unknown"),
+                    item.get("driver_plate", "Unknown"),
+                    item.get("driver_rating", 0.0)
+                )
                 self.bookings.append(booking)
 
     def book_ride(self, user, vehicle_type, start_location, end_location, distance):
@@ -58,6 +67,25 @@ class BookingService:
                     return "You can only cancel your own bookings!"
                 booking.cancel()
                 return f"Booking #{booking_id} cancelled successfully!"
+        return "Booking not found!"
+
+    def complete_booking(self, booking_id, username):
+        for booking in self.bookings:
+            if booking.booking_id == booking_id:
+                if booking.user != username:
+                    return "You can only complete your own bookings!"
+                booking.complete()
+                return f"Booking #{booking_id} completed!"
+        return "Booking not found!"
+
+    def rate_booking(self, booking_id, username, rating):
+        for booking in self.bookings:
+            if booking.booking_id == booking_id:
+                if booking.user != username:
+                    return "You can only rate your own bookings!"
+                if booking.status != "Completed":
+                    return "You can only rate completed bookings!"
+                return booking.add_rating(rating)
         return "Booking not found!"
 
     def get_active_bookings(self):
