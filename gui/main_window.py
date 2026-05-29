@@ -10,7 +10,7 @@ class MainWindow:
         self.root = tk.Tk()
         self.root.title("Ride Booking System")
         self.root.geometry("800x600")
-        self.root.configure(bg="#1a1a2e")
+        self.root.configure(bg="#1a1200")
 
         self.file_manager = FileManager()
         self.service = BookingService(self.file_manager)
@@ -19,27 +19,25 @@ class MainWindow:
         self.setup_tabs()
 
     def setup_header(self):
-        header = tk.Frame(self.root, bg="#16213e", pady=10)
+        header = tk.Frame(self.root, bg="#2d1f00", pady=10)
         header.pack(fill="x")
 
-        # Title and welcome
-        title_frame = tk.Frame(header, bg="#16213e")
+        title_frame = tk.Frame(header, bg="#2d1f00")
         title_frame.pack(fill="x", padx=20)
 
         tk.Label(
             title_frame,
             text="🚗 Ride Booking System",
             font=("Helvetica", 20, "bold"),
-            bg="#16213e",
-            fg="#e94560"
+            bg="#2d1f00",
+            fg="#FFD700"
         ).pack(side="left")
 
-        # Logout button
         tk.Button(
             title_frame,
             text="Logout 🚪",
             font=("Helvetica", 10, "bold"),
-            bg="#e94560",
+            bg="#B8860B",
             fg="white",
             relief="flat",
             padx=10,
@@ -49,14 +47,14 @@ class MainWindow:
 
         tk.Label(
             header,
-            text=f"Welcome, {self.account.name}! 👋",
+            text=f"Welcome, {self.account.name}! 👑",
             font=("Helvetica", 11),
-            bg="#16213e",
-            fg="white"
+            bg="#2d1f00",
+            fg="#FFA500"
         ).pack()
 
     def setup_tabs(self):
-        tab_frame = tk.Frame(self.root, bg="#1a1a2e")
+        tab_frame = tk.Frame(self.root, bg="#1a1200")
         tab_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
         self.booking_form = BookingForm(
@@ -79,7 +77,6 @@ class MainWindow:
         confirm = messagebox.askyesno("Logout", "Are you sure you want to logout?")
         if confirm:
             self.root.destroy()
-            # Restart login
             from gui.login_window import LoginWindow
             from gui.main_window import MainWindow
             login = LoginWindow()
