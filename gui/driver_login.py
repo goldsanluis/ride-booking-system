@@ -1,27 +1,27 @@
 import tkinter as tk
 from tkinter import messagebox
-from file_handler.account_manager import AccountManager
+from file_handler.driver_manager import DriverManager
 
 # Gold Theme Colors
-BG_DARK     = "#1a1200"   # Very dark brown/black
-BG_CARD     = "#2d1f00"   # Dark brown card
-BG_ENTRY    = "#3d2a00"   # Entry field background
-GOLD        = "#FFD700"   # Pure gold
-GOLD_DARK   = "#B8860B"   # Dark goldenrod
-GOLD_ACCENT = "#FFA500"   # Orange gold
+BG_DARK     = "#1a1200"
+BG_CARD     = "#2d1f00"
+BG_ENTRY    = "#3d2a00"
+GOLD        = "#FFD700"
+GOLD_DARK   = "#B8860B"
+GOLD_ACCENT = "#FFA500"
 TEXT_WHITE  = "#FFFFFF"
 TEXT_GRAY   = "#9a8060"
 
-class LoginWindow:
+class DriverLoginWindow:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Ride Booking System - Login")
-        self.root.geometry("400x550")
+        self.root.title("Ride Booking System - Driver Login")
+        self.root.geometry("400x750")
         self.root.configure(bg=BG_DARK)
         self.root.resizable(False, False)
 
-        self.account_manager = AccountManager()
-        self.logged_in_account = None
+        self.driver_manager = DriverManager()
+        self.logged_in_driver = None
 
         self.setup_ui()
 
@@ -32,7 +32,7 @@ class LoginWindow:
 
         tk.Label(
             header,
-            text="🚗",
+            text="🚕",
             font=("Helvetica", 40),
             bg=BG_DARK,
             fg=GOLD
@@ -40,7 +40,7 @@ class LoginWindow:
 
         tk.Label(
             header,
-            text="Ride Booking System",
+            text="Driver Portal",
             font=("Helvetica", 18, "bold"),
             bg=BG_DARK,
             fg=GOLD
@@ -48,7 +48,7 @@ class LoginWindow:
 
         tk.Label(
             header,
-            text="Your ride, your way!",
+            text="Start earning today!",
             font=("Helvetica", 10),
             bg=BG_DARK,
             fg=TEXT_GRAY
@@ -69,7 +69,7 @@ class LoginWindow:
 
         tk.Label(
             self.login_frame,
-            text="Welcome Back! 👑",
+            text="Welcome Back! 🚗",
             font=("Helvetica", 16, "bold"),
             bg=BG_CARD,
             fg=GOLD
@@ -141,7 +141,7 @@ class LoginWindow:
 
         tk.Button(
             self.login_frame,
-            text="Register here",
+            text="Register as Driver",
             font=("Helvetica", 10, "underline"),
             bg=BG_CARD,
             fg=GOLD,
@@ -155,7 +155,7 @@ class LoginWindow:
 
         tk.Label(
             self.login_frame,
-            text="Create Account",
+            text="Driver Registration",
             font=("Helvetica", 16, "bold"),
             bg=BG_CARD,
             fg=GOLD
@@ -165,54 +165,54 @@ class LoginWindow:
         tk.Label(
             self.login_frame,
             text="Full Name",
-            font=("Helvetica", 11),
+            font=("Helvetica", 10),
             bg=BG_CARD,
             fg=GOLD_ACCENT
         ).pack(anchor="w")
 
         self.name_entry = tk.Entry(
             self.login_frame,
-            font=("Helvetica", 11),
+            font=("Helvetica", 10),
             bg=BG_ENTRY,
             fg=TEXT_WHITE,
             insertbackground=GOLD,
             relief="flat",
             bd=5
         )
-        self.name_entry.pack(fill="x", pady=5)
+        self.name_entry.pack(fill="x", pady=3)
 
         # Username
         tk.Label(
             self.login_frame,
             text="Username",
-            font=("Helvetica", 11),
+            font=("Helvetica", 10),
             bg=BG_CARD,
             fg=GOLD_ACCENT
         ).pack(anchor="w")
 
         self.reg_username_entry = tk.Entry(
             self.login_frame,
-            font=("Helvetica", 11),
+            font=("Helvetica", 10),
             bg=BG_ENTRY,
             fg=TEXT_WHITE,
             insertbackground=GOLD,
             relief="flat",
             bd=5
         )
-        self.reg_username_entry.pack(fill="x", pady=5)
+        self.reg_username_entry.pack(fill="x", pady=3)
 
         # Password
         tk.Label(
             self.login_frame,
             text="Password",
-            font=("Helvetica", 11),
+            font=("Helvetica", 10),
             bg=BG_CARD,
             fg=GOLD_ACCENT
         ).pack(anchor="w")
 
         self.reg_password_entry = tk.Entry(
             self.login_frame,
-            font=("Helvetica", 11),
+            font=("Helvetica", 10),
             bg=BG_ENTRY,
             fg=TEXT_WHITE,
             insertbackground=GOLD,
@@ -220,13 +220,53 @@ class LoginWindow:
             bd=5,
             show="●"
         )
-        self.reg_password_entry.pack(fill="x", pady=5)
+        self.reg_password_entry.pack(fill="x", pady=3)
+
+        # Phone
+        tk.Label(
+            self.login_frame,
+            text="Phone",
+            font=("Helvetica", 10),
+            bg=BG_CARD,
+            fg=GOLD_ACCENT
+        ).pack(anchor="w")
+
+        self.phone_entry = tk.Entry(
+            self.login_frame,
+            font=("Helvetica", 10),
+            bg=BG_ENTRY,
+            fg=TEXT_WHITE,
+            insertbackground=GOLD,
+            relief="flat",
+            bd=5
+        )
+        self.phone_entry.pack(fill="x", pady=3)
+
+        # Plate
+        tk.Label(
+            self.login_frame,
+            text="Vehicle Plate",
+            font=("Helvetica", 10),
+            bg=BG_CARD,
+            fg=GOLD_ACCENT
+        ).pack(anchor="w")
+
+        self.plate_entry = tk.Entry(
+            self.login_frame,
+            font=("Helvetica", 10),
+            bg=BG_ENTRY,
+            fg=TEXT_WHITE,
+            insertbackground=GOLD,
+            relief="flat",
+            bd=5
+        )
+        self.plate_entry.pack(fill="x", pady=3)
 
         # Register Button
         tk.Button(
             self.login_frame,
             text="Register",
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 11, "bold"),
             bg=GOLD,
             fg=BG_DARK,
             relief="flat",
@@ -234,7 +274,7 @@ class LoginWindow:
             pady=8,
             cursor="hand2",
             command=self.register
-        ).pack(fill="x", pady=15)
+        ).pack(fill="x", pady=10)
 
         # Back to Login
         tk.Button(
@@ -256,9 +296,9 @@ class LoginWindow:
             messagebox.showerror("Error", "Please fill in all fields!")
             return
 
-        account, message = self.account_manager.login(username, password)
-        if account:
-            self.logged_in_account = account
+        driver, message = self.driver_manager.login(username, password)
+        if driver:
+            self.logged_in_driver = driver
             self.root.destroy()
         else:
             messagebox.showerror("Error", message)
@@ -267,13 +307,15 @@ class LoginWindow:
         name = self.name_entry.get()
         username = self.reg_username_entry.get()
         password = self.reg_password_entry.get()
+        phone = self.phone_entry.get()
+        plate = self.plate_entry.get()
 
-        if not all([name, username, password]):
+        if not all([name, username, password, phone, plate]):
             messagebox.showerror("Error", "Please fill in all fields!")
             return
 
-        account, message = self.account_manager.register(username, password, name)
-        if account:
+        driver, message = self.driver_manager.register(username, password, name, phone, plate, "Car")
+        if driver:
             messagebox.showinfo("Success", message + "\nPlease login!")
             self.show_login()
         else:
@@ -281,4 +323,4 @@ class LoginWindow:
 
     def run(self):
         self.root.mainloop()
-        return self.logged_in_account
+        return self.logged_in_driver

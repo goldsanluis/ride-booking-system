@@ -1,6 +1,19 @@
 import tkinter as tk
 from tkinter import messagebox
 
+# Gold Theme Colors
+BG_DARK     = "#1a1200"
+BG_CARD     = "#2d1f00"
+BG_ENTRY    = "#3d2a00"
+GOLD        = "#FFD700"
+GOLD_DARK   = "#B8860B"
+GOLD_ACCENT = "#FFA500"
+GOLD_LIGHT  = "#FFE55C"
+TEXT_WHITE  = "#FFFFFF"
+TEXT_GRAY   = "#9a8060"
+GREEN       = "#4ecca3"
+RED_CANCEL  = "#cc4400"
+
 class BookingList:
     def __init__(self, parent, service, account):
         self.service = service
@@ -8,40 +21,41 @@ class BookingList:
         self.selected_booking_id = None
         self.card_frames = {}
 
-        self.frame = tk.Frame(parent, bg="#16213e", padx=10, pady=10)
+        self.frame = tk.Frame(parent, bg=BG_DARK, padx=10, pady=10)
 
         tk.Label(
             self.frame,
             text="My Bookings",
             font=("Helvetica", 16, "bold"),
-            bg="#16213e",
-            fg="#e94560"
+            bg=BG_DARK,
+            fg=GOLD
         ).pack(pady=10)
 
-        self.canvas = tk.Canvas(self.frame, bg="#16213e", highlightthickness=0)
+        self.canvas = tk.Canvas(self.frame, bg=BG_DARK, highlightthickness=0)
         self.scrollbar = tk.Scrollbar(self.frame, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
 
-        self.inner_frame = tk.Frame(self.canvas, bg="#16213e")
+        self.inner_frame = tk.Frame(self.canvas, bg=BG_DARK)
         self.canvas_window = self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
         self.inner_frame.bind("<Configure>", self.on_frame_configure)
         self.canvas.bind("<Configure>", self.on_canvas_configure)
 
         # Buttons frame
-        btn_frame = tk.Frame(self.frame, bg="#16213e")
+        btn_frame = tk.Frame(self.frame, bg=BG_DARK)
         btn_frame.pack(fill="x", pady=5)
 
         tk.Button(
             btn_frame,
             text="Receipt 🧾",
             font=("Helvetica", 10, "bold"),
-            bg="#0f3460",
-            fg="white",
+            bg=GOLD_DARK,
+            fg=TEXT_WHITE,
             relief="flat",
             padx=5,
             pady=5,
+            cursor="hand2",
             command=self.show_receipt
         ).pack(side="left", fill="x", expand=True, padx=2)
 
@@ -49,11 +63,12 @@ class BookingList:
             btn_frame,
             text="Complete ✅",
             font=("Helvetica", 10, "bold"),
-            bg="#0f3460",
-            fg="white",
+            bg=GOLD_DARK,
+            fg=TEXT_WHITE,
             relief="flat",
             padx=5,
             pady=5,
+            cursor="hand2",
             command=self.complete_booking
         ).pack(side="left", fill="x", expand=True, padx=2)
 
@@ -61,11 +76,12 @@ class BookingList:
             btn_frame,
             text="Rate ⭐",
             font=("Helvetica", 10, "bold"),
-            bg="#0f3460",
-            fg="white",
+            bg=GOLD_DARK,
+            fg=TEXT_WHITE,
             relief="flat",
             padx=5,
             pady=5,
+            cursor="hand2",
             command=self.rate_booking
         ).pack(side="left", fill="x", expand=True, padx=2)
 
@@ -73,11 +89,12 @@ class BookingList:
             btn_frame,
             text="Cancel ❌",
             font=("Helvetica", 10, "bold"),
-            bg="#e94560",
-            fg="white",
+            bg=RED_CANCEL,
+            fg=TEXT_WHITE,
             relief="flat",
             padx=5,
             pady=5,
+            cursor="hand2",
             command=self.cancel_booking
         ).pack(side="left", fill="x", expand=True, padx=2)
 
@@ -102,8 +119,8 @@ class BookingList:
                 self.inner_frame,
                 text="No bookings yet!",
                 font=("Helvetica", 12),
-                bg="#16213e",
-                fg="gray"
+                bg=BG_DARK,
+                fg=TEXT_GRAY
             ).pack(pady=20)
             return
 
@@ -112,14 +129,14 @@ class BookingList:
 
     def create_booking_card(self, booking):
         if booking.status == "Active":
-            card_color = "#0f3460"
-            border_color = "#e94560"
+            card_color = "#2d1f00"
+            border_color = GOLD
         elif booking.status == "Completed":
-            card_color = "#1a4a1a"
-            border_color = "#4ecca3"
+            card_color = "#1a2a00"
+            border_color = GREEN
         else:
-            card_color = "#2d2d2d"
-            border_color = "gray"
+            card_color = "#2a2a2a"
+            border_color = TEXT_GRAY
 
         border_frame = tk.Frame(
             self.inner_frame,
@@ -136,17 +153,17 @@ class BookingList:
         rating_text = f"⭐{booking.rating}" if booking.rating else "Not rated"
 
         labels = [
-            (f"Booking #{booking.booking_id}{surge_text}", "Helvetica 11 bold", "#e94560"),
-            (f"👤 {booking.user}", "Helvetica 10", "white"),
-            (f"🚗 {booking.vehicle.name}", "Helvetica 10", "white"),
-            (f"🧑‍✈️ Driver: {booking.driver.name} | {booking.driver.plate}", "Helvetica 10", "white"),
-            (f"⭐ Driver Rating: {booking.driver.rating}", "Helvetica 10", "white"),
-            (f"📍 {booking.start_location} → {booking.end_location}", "Helvetica 10", "white"),
-            (f"📏 {booking.distance} km", "Helvetica 10", "white"),
-            (f"💰 ₱{booking.total_cost:.2f}", "Helvetica 10 bold", "#4ecca3"),
-            (f"📅 {booking.date}", "Helvetica 9", "gray"),
-            (f"● {booking.status}", "Helvetica 10 bold", "#4ecca3" if booking.status == "Active" else "gray"),
-            (f"Your Rating: {rating_text}", "Helvetica 10", "#4ecca3" if booking.rating else "gray"),
+            (f"Booking #{booking.booking_id}{surge_text}", "Helvetica 11 bold", GOLD),
+            (f"👤 {booking.user}", "Helvetica 10", TEXT_WHITE),
+            (f"🚗 {booking.vehicle.name}", "Helvetica 10", TEXT_WHITE),
+            (f"🧑‍✈️ Driver: {booking.driver.name} | {booking.driver.plate}", "Helvetica 10", TEXT_WHITE),
+            (f"⭐ Driver Rating: {booking.driver.rating}", "Helvetica 10", TEXT_WHITE),
+            (f"📍 {booking.start_location} → {booking.end_location}", "Helvetica 10", TEXT_WHITE),
+            (f"📏 {booking.distance} km", "Helvetica 10", TEXT_WHITE),
+            (f"💰 ₱{booking.total_cost:.2f}", "Helvetica 10 bold", GOLD),
+            (f"📅 {booking.date}", "Helvetica 9", TEXT_GRAY),
+            (f"● {booking.status}", "Helvetica 10 bold", GOLD_ACCENT if booking.status == "Active" else TEXT_GRAY),
+            (f"Your Rating: {rating_text}", "Helvetica 10", GOLD_ACCENT if booking.rating else TEXT_GRAY),
         ]
 
         for text, font, color in labels:
@@ -164,12 +181,12 @@ class BookingList:
             booking = self.service.find_booking_by_id(bid)
             if booking:
                 if booking.status == "Active":
-                    frame.configure(bg="#e94560")
+                    frame.configure(bg=GOLD)
                 elif booking.status == "Completed":
-                    frame.configure(bg="#4ecca3")
+                    frame.configure(bg=GREEN)
                 else:
-                    frame.configure(bg="gray")
-        border_frame.configure(bg="white")
+                    frame.configure(bg=TEXT_GRAY)
+        border_frame.configure(bg=GOLD_LIGHT)
         self.selected_booking_id = booking_id
 
     def get_selected(self):
@@ -189,16 +206,16 @@ class BookingList:
 
         receipt = tk.Toplevel()
         receipt.title(f"Receipt - Booking #{booking.booking_id}")
-        receipt.geometry("350x450")
-        receipt.configure(bg="#1a1a2e")
+        receipt.geometry("350x470")
+        receipt.configure(bg=BG_DARK)
         receipt.resizable(False, False)
 
         tk.Label(receipt, text="🧾 BOOKING RECEIPT",
                 font=("Helvetica", 14, "bold"),
-                bg="#1a1a2e", fg="#e94560").pack(pady=10)
+                bg=BG_DARK, fg=GOLD).pack(pady=10)
 
         tk.Label(receipt, text="─" * 40,
-                bg="#1a1a2e", fg="gray").pack()
+                bg=BG_DARK, fg=GOLD_DARK).pack()
 
         surge_text = f"(Surge {booking.surge}x applied)" if booking.surge > 1.0 else ""
         rating_text = f"⭐{booking.rating}" if booking.rating else "Not yet rated"
@@ -221,16 +238,17 @@ class BookingList:
         ]
 
         for label, value in details:
-            row = tk.Frame(receipt, bg="#16213e", padx=10, pady=3)
+            row = tk.Frame(receipt, bg=BG_CARD, padx=10, pady=3)
             row.pack(fill="x", padx=20, pady=1)
             tk.Label(row, text=label, font=("Helvetica", 10),
-                    bg="#16213e", fg="gray", width=12, anchor="w").pack(side="left")
+                    bg=BG_CARD, fg=TEXT_GRAY, width=12, anchor="w").pack(side="left")
             tk.Label(row, text=value, font=("Helvetica", 10, "bold"),
-                    bg="#16213e", fg="white", anchor="w").pack(side="left")
+                    bg=BG_CARD, fg=GOLD, anchor="w").pack(side="left")
 
         tk.Button(receipt, text="Close",
                 font=("Helvetica", 11, "bold"),
-                bg="#e94560", fg="white", relief="flat",
+                bg=GOLD, fg=BG_DARK, relief="flat",
+                cursor="hand2",
                 command=receipt.destroy).pack(pady=15)
 
     def complete_booking(self):
@@ -258,28 +276,27 @@ class BookingList:
             messagebox.showerror("Error", "You already rated this booking!")
             return
 
-        # Rating window
         rate_window = tk.Toplevel()
         rate_window.title("Rate your ride")
-        rate_window.geometry("300x250")
-        rate_window.configure(bg="#1a1a2e")
+        rate_window.geometry("300x270")
+        rate_window.configure(bg=BG_DARK)
         rate_window.resizable(False, False)
 
         tk.Label(rate_window, text="⭐ Rate Your Ride",
                 font=("Helvetica", 14, "bold"),
-                bg="#1a1a2e", fg="#e94560").pack(pady=15)
+                bg=BG_DARK, fg=GOLD).pack(pady=15)
 
         tk.Label(rate_window, text=f"Driver: {booking.driver.name}",
                 font=("Helvetica", 11),
-                bg="#1a1a2e", fg="white").pack()
+                bg=BG_DARK, fg=TEXT_WHITE).pack()
 
         tk.Label(rate_window, text="Select Rating:",
                 font=("Helvetica", 11),
-                bg="#1a1a2e", fg="white").pack(pady=10)
+                bg=BG_DARK, fg=GOLD_ACCENT).pack(pady=10)
 
         rating_var = tk.IntVar(value=5)
 
-        stars_frame = tk.Frame(rate_window, bg="#1a1a2e")
+        stars_frame = tk.Frame(rate_window, bg=BG_DARK)
         stars_frame.pack()
 
         for i in range(1, 6):
@@ -288,9 +305,11 @@ class BookingList:
                 text=f"{'⭐' * i}",
                 variable=rating_var,
                 value=i,
-                bg="#1a1a2e",
-                fg="white",
-                selectcolor="#e94560",
+                bg=BG_DARK,
+                fg=TEXT_WHITE,
+                selectcolor=GOLD_DARK,
+                activebackground=BG_DARK,
+                activeforeground=GOLD,
                 font=("Helvetica", 11)
             ).pack(anchor="w")
 
@@ -307,7 +326,8 @@ class BookingList:
 
         tk.Button(rate_window, text="Submit Rating",
                 font=("Helvetica", 11, "bold"),
-                bg="#e94560", fg="white", relief="flat",
+                bg=GOLD, fg=BG_DARK, relief="flat",
+                cursor="hand2",
                 command=submit_rating).pack(pady=15)
 
     def cancel_booking(self):
