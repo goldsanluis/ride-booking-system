@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from models.driver import Driver
 
 class Booking:
@@ -15,12 +15,12 @@ class Booking:
         self.notes = notes
         self.promo_code = promo_code
         self.discount = discount
-        self.scheduled_time = scheduled_time  # NEW: future scheduled datetime string
+        self.scheduled_time = scheduled_time
         self.date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.status = "Scheduled" if scheduled_time else "Active"
         self.driver = Driver("Unassigned", "Unassigned", 0.0, driver_id="unassigned")
         self.rating = None
-        self.surge = self.check_surge()
+        self.surge = 1.0 if scheduled_time else self.check_surge()
         self.total_cost = self.calculate_total_cost()
 
     def check_surge(self):
@@ -40,7 +40,8 @@ class Booking:
         self.status = "Completed"
 
     def activate(self):
-        """Change Scheduled → Active"""
+        self.surge = self.check_surge()
+        self.total_cost = self.calculate_total_cost()
         self.status = "Active"
 
     def add_rating(self, rating):

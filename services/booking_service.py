@@ -1,4 +1,4 @@
-from models.booking import Booking
+﻿from models.booking import Booking
 from models.car import Car
 from models.van import Van
 from models.bike import Bike
@@ -76,10 +76,11 @@ class BookingService:
         for booking in self.bookings:
             if booking.booking_id == booking_id:
                 if booking.user != username:
-                    return "You can only cancel your own bookings!"
+                    return "You can only cancel your own bookings!", 0.0
+                refund = booking.total_cost
                 booking.cancel()
-                return f"Booking #{booking_id} cancelled successfully!"
-        return "Booking not found!"
+                return f"Booking #{booking_id} cancelled. ₱{refund:.2f} refunded to your wallet!", refund
+        return "Booking not found!", 0.0
 
     def complete_booking(self, booking_id, username):
         for booking in self.bookings:
@@ -109,7 +110,6 @@ class BookingService:
                 return booking
         return None
 
-    # NEW: search bookings by keyword in locations
     def search_user_bookings(self, username, keyword):
         keyword = keyword.lower()
         return [
@@ -118,7 +118,6 @@ class BookingService:
                or keyword in (b.notes or "").lower()
         ]
 
-    # NEW: get spending stats for a user
     def get_user_stats(self, username):
         bookings = self.get_user_bookings(username)
         completed = [b for b in bookings if b.status == "Completed"]

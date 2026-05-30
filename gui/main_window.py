@@ -1,4 +1,4 @@
-import tkinter as tk
+﻿import tkinter as tk
 from tkinter import messagebox
 from gui.booking_form import BookingForm
 from gui.booking_list import BookingList
@@ -32,7 +32,7 @@ class MainWindow:
 
         tk.Label(
             title_frame,
-            text="🚗 Ride Booking System",
+            text="ðŸš— Ride Booking System",
             font=("Helvetica", 20, "bold"),
             bg="#2d1f00",
             fg="#FFD700"
@@ -40,7 +40,7 @@ class MainWindow:
 
         tk.Button(
             title_frame,
-            text="Logout 🚪",
+            text="Logout ðŸšª",
             font=("Helvetica", 10, "bold"),
             bg="#B8860B",
             fg="white",
@@ -52,7 +52,7 @@ class MainWindow:
 
         tk.Button(
             title_frame,
-            text="🔄 Refresh",
+            text="ðŸ”„ Refresh",
             font=("Helvetica", 10, "bold"),
             bg="#FFA500",
             fg="white",
@@ -64,7 +64,7 @@ class MainWindow:
 
         self.notif_btn = tk.Button(
             title_frame,
-            text="🔔 Notifications",
+            text="ðŸ”” Notifications",
             font=("Helvetica", 10, "bold"),
             bg="#2d1f00",
             fg="#FFD700",
@@ -78,7 +78,7 @@ class MainWindow:
 
         tk.Label(
             header,
-            text=f"Welcome, {self.account.name}! 👑",
+            text=f"Welcome, {self.account.name}! ðŸ‘‘",
             font=("Helvetica", 11),
             bg="#2d1f00",
             fg="#FFA500"
@@ -95,9 +95,9 @@ class MainWindow:
                 notifs = json.load(f)
             unread = [n for n in notifs if n.get("user") == self.account.name and not n.get("seen")]
             if unread:
-                self.notif_btn.config(fg="#FF4444", text=f"🔔 ({len(unread)}) Notifications")
+                self.notif_btn.config(fg="#FF4444", text=f"ðŸ”” ({len(unread)}) Notifications")
             else:
-                self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
+                self.notif_btn.config(fg="#FFD700", text="ðŸ”” Notifications")
         except:
             pass
         self.root.after(5000, self._refresh_notif_badge)
@@ -123,7 +123,7 @@ class MainWindow:
                 n["seen"] = True
         with open(nf, "w") as f:
             json.dump(notifs, f, indent=2)
-        self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
+        self.notif_btn.config(fg="#FFD700", text="ðŸ”” Notifications")
         messagebox.showinfo(f"Notifications ({len(unread)} new)", msg.strip())
 
     def setup_tabs(self):
@@ -158,6 +158,7 @@ class MainWindow:
         self.wallet_panel.frame.pack(fill="x", pady=5)
 
         self.booking_list = BookingList(tab_frame, self.service, self.account)
+        self.booking_list.account_manager = self.account_manager
         self.booking_list.frame.pack(side="right", fill="both", expand=True, padx=5)
 
     def refresh(self):
@@ -183,3 +184,4 @@ class MainWindow:
 
     def run(self):
         self.root.mainloop()
+
