@@ -27,15 +27,18 @@ class DriverDashboard:
         self.driver_manager = DriverManager()
         self.service = BookingService(self.file_manager)
 
+        self.header_frame = None
         self.setup_header()
         self.setup_content()
 
     def setup_header(self):
-        header = tk.Frame(self.root, bg=BG_CARD, pady=15)
-        header.pack(fill="x")
+        if self.header_frame:
+            self.header_frame.destroy()
 
-        # Driver info
-        info_frame = tk.Frame(header, bg=BG_CARD)
+        self.header_frame = tk.Frame(self.root, bg=BG_CARD, pady=15)
+        self.header_frame.pack(fill="x")
+
+        info_frame = tk.Frame(self.header_frame, bg=BG_CARD)
         info_frame.pack(fill="x", padx=20)
 
         tk.Label(
@@ -62,17 +65,29 @@ class DriverDashboard:
             fg=GOLD_ACCENT
         ).pack(side="left")
 
-        # Earnings display
         earnings = self.driver.get("wallet_balance", 0.0)
-        tk.Label(
+        self.earnings_label = tk.Label(
             info_frame,
             text=f"💰 Earnings: ₱{earnings:.2f}",
             font=("Helvetica", 11, "bold"),
             bg=BG_CARD,
-            fg="#4ecca3"
-        ).pack(side="left", padx=20)
+            fg=GREEN
+        )
+        self.earnings_label.pack(side="left", padx=20)
 
-        # Logout button
+        tk.Button(
+            info_frame,
+            text="🔄 Refresh",
+            font=("Helvetica", 10, "bold"),
+            bg=GOLD_ACCENT,
+            fg=BG_DARK,
+            relief="flat",
+            padx=10,
+            pady=5,
+            cursor="hand2",
+            command=self.refresh_all
+        ).pack(side="right", padx=5)
+
         tk.Button(
             info_frame,
             text="Logout 🚪",
@@ -87,21 +102,19 @@ class DriverDashboard:
         ).pack(side="right")
 
     def setup_content(self):
-        content = tk.Frame(self.root, bg=BG_DARK)
-        content.pack(fill="both", expand=True, padx=20, pady=20)
+        self.content_frame = tk.Frame(self.root, bg=BG_DARK)
+        self.content_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # Title
         tk.Label(
-            content,
+            self.content_frame,
             text="Available Ride Requests 📍",
             font=("Helvetica", 14, "bold"),
             bg=BG_DARK,
             fg=GOLD
         ).pack(pady=10)
 
-        # Canvas for scrolling
-        self.canvas = tk.Canvas(content, bg=BG_DARK, highlightthickness=0)
-        self.scrollbar = tk.Scrollbar(content, orient="vertical", command=self.canvas.yview)
+        self.canvas = tk.Canvas(self.content_frame, bg=BG_DARK, highlightthickness=0)
+        self.scrollbar = tk.Scrollbar(self.content_frame, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
@@ -119,15 +132,31 @@ class DriverDashboard:
     def on_canvas_configure(self, event):
         self.canvas.itemconfig(self.canvas_window, width=event.width)
 
+    def refresh_all(self):
+        # Reload bookings from file
+        self.service = BookingService(self.file_manager)
+        # Reload driver wallet from file
+        drivers = self.driver_manager.load_drivers()
+        for d in drivers:
+            if d["driver_id"] == self.driver["driver_id"]:
+                self.driver["wallet_balance"] = d.get("wallet_balance", 0.0)
+                break
+        # Update earnings label
+        self.earnings_label.config(
+            text=f"💰 Earnings: ₱{self.driver['wallet_balance']:.2f}"
+        )
+        self.refresh_requests()
+
     def refresh_requests(self):
         for widget in self.inner_frame.winfo_children():
             widget.destroy()
 
-        # Get all bookings that are "Active" and not assigned to this driver
         bookings = self.service.get_all_bookings()
-        active_bookings = [b for b in bookings if b.status == "Active" and b.driver.driver_id != self.driver['driver_id']]
-        print(f"Active bookings: {len(active_bookings)}")
-        
+        active_bookings = [
+            b for b in bookings
+            if b.status == "Active" and b.driver.driver_id != self.driver['driver_id']
+        ]
+
         if not active_bookings:
             tk.Label(
                 self.inner_frame,
@@ -150,7 +179,6 @@ class DriverDashboard:
         )
         card_frame.pack(fill="x", padx=10, pady=8)
 
-        # Passenger info
         tk.Label(
             card_frame,
             text=f"👤 {booking.user}",
@@ -159,7 +187,6 @@ class DriverDashboard:
             fg=GOLD
         ).pack(anchor="w")
 
-        # Route
         tk.Label(
             card_frame,
             text=f"📍 {booking.start_location} → {booking.end_location}",
@@ -168,7 +195,6 @@ class DriverDashboard:
             fg=TEXT_WHITE
         ).pack(anchor="w", pady=5)
 
-        # Details
         details_text = f"📏 {booking.distance} km  |  💰 ₱{booking.total_cost:.2f}  |  🚗 {booking.vehicle.name}"
         tk.Label(
             card_frame,
@@ -178,7 +204,16 @@ class DriverDashboard:
             fg=GOLD_ACCENT
         ).pack(anchor="w")
 
-        # Accept button
+        surge_text = f"🚀 Surge: {booking.surge}x" if booking.surge > 1.0 else ""
+        if surge_text:
+            tk.Label(
+                card_frame,
+                text=surge_text,
+                font=("Helvetica", 10, "bold"),
+                bg=BG_CARD,
+                fg=GREEN
+            ).pack(anchor="w")
+
         tk.Button(
             card_frame,
             text="✅ Accept Ride",
@@ -189,34 +224,51 @@ class DriverDashboard:
             padx=15,
             pady=8,
             cursor="hand2",
-            command=lambda: self.accept_ride(booking)
+            command=lambda b=booking: self.accept_ride(b)
         ).pack(pady=10)
 
     def accept_ride(self, booking):
         confirm = messagebox.askyesno(
             "Accept Ride?",
-            f"Accept ride from {booking.user}?\n{booking.start_location} → {booking.end_location}"
+            f"Accept ride from {booking.user}?\n"
+            f"{booking.start_location} → {booking.end_location}\n"
+            f"You will earn: ₱{booking.total_cost:.2f}"
         )
-        
+
         if confirm:
-            # Convert driver dict to Driver object
+            # Assign driver to booking
             booking.driver = Driver(
                 self.driver['name'],
                 self.driver['plate'],
                 self.driver['rating'],
                 driver_id=self.driver['driver_id']
             )
-            
+
             # Save booking
             self.file_manager.save_bookings(self.service.get_all_bookings())
-            
-            messagebox.showinfo(
-                "Ride Accepted! 🎉",
-                f"You accepted ride from {booking.user}!\nYou will earn ₱{booking.total_cost:.2f} when they complete the ride."
+
+            # Add earnings to driver wallet
+            self.driver_manager.update_driver_wallet(
+                self.driver['driver_id'],
+                booking.total_cost
             )
 
-            # Refresh requests AND header (to update earnings)
-            self.setup_header()
+            # Update driver dict wallet balance
+            self.driver['wallet_balance'] = self.driver.get('wallet_balance', 0.0) + booking.total_cost
+
+            # Update earnings label
+            self.earnings_label.config(
+                text=f"💰 Earnings: ₱{self.driver['wallet_balance']:.2f}"
+            )
+
+            messagebox.showinfo(
+                "Ride Accepted! 🎉",
+                f"You accepted ride from {booking.user}!\n"
+                f"Route: {booking.start_location} → {booking.end_location}\n"
+                f"You earned: ₱{booking.total_cost:.2f}\n"
+                f"Total Earnings: ₱{self.driver['wallet_balance']:.2f}"
+            )
+
             self.refresh_requests()
 
     def logout(self):
