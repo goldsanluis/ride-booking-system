@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from datetime import datetime
+from datetime import datetime, timedelta
 from services.promo_service import apply_promo, list_promos
 
 BG_DARK     = "#2d1f00"
@@ -9,6 +9,7 @@ GOLD        = "#FFD700"
 GOLD_ACCENT = "#FFA500"
 GREEN       = "#4ecca3"
 TEXT_WHITE  = "#FFFFFF"
+TEAL        = "#00bcd4"
 
 class BookingForm:
     def __init__(self, parent, service, file_manager, refresh_callback, account, account_manager):
@@ -19,6 +20,7 @@ class BookingForm:
         self.account_manager  = account_manager
         self._discount        = 0.0
         self._promo_applied   = None
+        self._scheduled_time  = None   # NEW
 
         self.frame = tk.Frame(parent, bg=BG_DARK, padx=10, pady=10)
         self._build()
@@ -28,6 +30,26 @@ class BookingForm:
         tk.Label(self.frame, text="Book a Ride",
                  font=("Helvetica", 16, "bold"),
                  bg=BG_DARK, fg=GOLD).pack(pady=(10, 4))
+
+        # ── Favorites quick-book ──────────────────────────────────────────────
+        fav_outer = tk.Frame(self.frame, bg=BG_FIELD, padx=8, pady=6)
+        fav_outer.pack(fill="x", pady=(0, 6))
+        fav_top = tk.Frame(fav_outer, bg=BG_FIELD); fav_top.pack(fill="x")
+        tk.Label(fav_top, text="⭐ Favorite Routes",
+                 font=("Helvetica", 10, "bold"), bg=BG_FIELD, fg=GOLD).pack(side="left")
+        tk.Button(fav_top, text="Save Current Route", font=("Helvetica", 9),
+                  bg="#B8860B", fg=TEXT_WHITE, relief="flat", padx=6, pady=2,
+                  cursor="hand2", command=self._save_favorite).pack(side="right")
+
+        self.fav_var = tk.StringVar(value="— select a favorite —")
+        self.fav_menu_btn = tk.OptionMenu(fav_outer, self.fav_var, "— select a favorite —",
+                                          command=self._load_favorite)
+        self.fav_menu_btn.config(font=("Helvetica", 9), bg=BG_DARK, fg=TEXT_WHITE,
+                                 activebackground="#B8860B", relief="flat", bd=0,
+                                 highlightthickness=0)
+        self.fav_menu_btn["menu"].config(bg=BG_DARK, fg=TEXT_WHITE, font=("Helvetica", 9))
+        self.fav_menu_btn.pack(fill="x", pady=(4, 0))
+        self._refresh_favorites_menu()
 
         # Vehicle selector
         self._lbl("Vehicle Type:")
@@ -106,6 +128,44 @@ class BookingForm:
         self.promo_label = tk.Label(promo_outer, text="", font=("Helvetica", 9),
                                     bg=BG_FIELD, fg=GREEN)
         self.promo_label.pack(anchor="w")
+
+        # ── Schedule a Ride ───────────────────────────────────────────────────
+        sched_outer = tk.Frame(self.frame, bg="#002233", padx=8, pady=6)
+        sched_outer.pack(fill="x", pady=(8, 0))
+        sched_top = tk.Frame(sched_outer, bg="#002233"); sched_top.pack(fill="x")
+        tk.Label(sched_top, text="🗓️ Schedule Ride (optional)",
+                 font=("Helvetica", 10, "bold"), bg="#002233", fg=TEAL).pack(side="left")
+        tk.Button(sched_top, text="Clear", font=("Helvetica", 9),
+                  bg="#003344", fg=TEXT_WHITE, relief="flat", padx=6,
+                  cursor="hand2", command=self._clear_schedule).pack(side="right")
+
+        sched_row = tk.Frame(sched_outer, bg="#002233"); sched_row.pack(fill="x", pady=4)
+        tk.Label(sched_row, text="Date (YYYY-MM-DD):", font=("Helvetica", 9),
+                 bg="#002233", fg=TEXT_WHITE).pack(side="left")
+        self.sched_date = tk.Entry(sched_row, font=("Helvetica", 10), width=13,
+                                   bg=BG_FIELD, fg=TEXT_WHITE,
+                                   insertbackground=GOLD, relief="flat", bd=4)
+        self.sched_date.insert(0, (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"))
+        self.sched_date.pack(side="left", padx=(4, 10))
+
+        tk.Label(sched_row, text="Time (HH:MM):", font=("Helvetica", 9),
+                 bg="#002233", fg=TEXT_WHITE).pack(side="left")
+        self.sched_time = tk.Entry(sched_row, font=("Helvetica", 10), width=7,
+                                   bg=BG_FIELD, fg=TEXT_WHITE,
+                                   insertbackground=GOLD, relief="flat", bd=4)
+        self.sched_time.insert(0, "08:00")
+        self.sched_time.pack(side="left", padx=(4, 0))
+
+        self.sched_enable = tk.BooleanVar(value=False)
+        tk.Checkbutton(sched_outer, text="Enable scheduled booking",
+                       variable=self.sched_enable,
+                       bg="#002233", fg=TEXT_WHITE, selectcolor="#003344",
+                       activebackground="#002233", activeforeground=TEAL,
+                       font=("Helvetica", 9)).pack(anchor="w")
+
+        self.sched_status = tk.Label(sched_outer, text="", font=("Helvetica", 9, "italic"),
+                                     bg="#002233", fg=TEAL)
+        self.sched_status.pack(anchor="w")
 
         # ── Pricing reference ─────────────────────────────────────────────────
         pf = tk.Frame(self.frame, bg="#3d2a00", padx=8, pady=6)
@@ -204,6 +264,103 @@ class BookingForm:
     def _show_promos(self):
         messagebox.showinfo("Available Promo Codes", list_promos())
 
+    # ── Schedule helpers ──────────────────────────────────────────────────────
+    def _parse_scheduled_time(self):
+        if not self.sched_enable.get():
+            return None
+        date_str = self.sched_date.get().strip()
+        time_str = self.sched_time.get().strip()
+        try:
+            dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+            if dt <= datetime.now():
+                raise ValueError("Scheduled time must be in the future")
+            return dt.strftime("%Y-%m-%d %H:%M")
+        except ValueError as e:
+            raise ValueError(f"Invalid schedule: {e}")
+
+    def _clear_schedule(self):
+        self.sched_enable.set(False)
+        self.sched_status.config(text="")
+
+    # ── Favorites ─────────────────────────────────────────────────────────────
+    def _refresh_favorites_menu(self):
+        favs = self.file_manager.load_favorites(self.account.username)
+        menu = self.fav_menu_btn["menu"]
+        menu.delete(0, "end")
+        menu.add_command(label="— select a favorite —",
+                         command=lambda: self.fav_var.set("— select a favorite —"))
+        if not favs:
+            menu.add_command(label="(no favorites saved yet)", state="disabled")
+            return
+        for i, fav in enumerate(favs):
+            label = f"{fav['name']}  ({fav['start']} → {fav['end']})"
+            menu.add_command(label=label,
+                             command=lambda f=fav: self._load_favorite(f))
+        menu.add_separator()
+        for i, fav in enumerate(favs):
+            menu.add_command(label=f"🗑 Delete: {fav['name']}",
+                             command=lambda idx=i: self._delete_favorite(idx))
+
+    def _load_favorite(self, fav_or_str):
+        if isinstance(fav_or_str, str):
+            return
+        fav = fav_or_str
+        self.start_entry.delete(0, tk.END); self.start_entry.insert(0, fav["start"])
+        self.end_entry.delete(0, tk.END);   self.end_entry.insert(0, fav["end"])
+        self.distance_entry.delete(0, tk.END)
+        if fav.get("distance"):
+            self.distance_entry.insert(0, str(fav["distance"]))
+        if fav.get("vehicle") in ("Car", "Van", "Bike"):
+            self.vehicle_var.set(fav["vehicle"])
+        self._update_estimate()
+
+    def _save_favorite(self):
+        start = self.start_entry.get().strip()
+        end   = self.end_entry.get().strip()
+        if not start or not end:
+            messagebox.showerror("Error", "Fill in start and end locations first.")
+            return
+        try:
+            dist = float(self.distance_entry.get())
+        except ValueError:
+            dist = 0.0
+
+        # Ask for a friendly name
+        name_win = tk.Toplevel()
+        name_win.title("Save Favorite Route")
+        name_win.configure(bg=BG_DARK)
+        name_win.resizable(False, False)
+        name_win.grab_set()
+
+        tk.Label(name_win, text="Name this route:", font=("Helvetica", 11),
+                 bg=BG_DARK, fg=GOLD).pack(padx=20, pady=(16, 4))
+        name_entry = tk.Entry(name_win, font=("Helvetica", 11), bg=BG_FIELD,
+                              fg=TEXT_WHITE, insertbackground=GOLD, relief="flat", bd=5, width=28)
+        default_name = f"{start[:12]} → {end[:12]}"
+        name_entry.insert(0, default_name)
+        name_entry.pack(padx=20, pady=4)
+
+        def do_save():
+            name = name_entry.get().strip() or default_name
+            route = {"name": name, "start": start, "end": end,
+                     "distance": dist, "vehicle": self.vehicle_var.get()}
+            saved = self.file_manager.save_favorite(self.account.username, route)
+            name_win.destroy()
+            if saved:
+                messagebox.showinfo("Saved!", f"✅ '{name}' saved to favorites!")
+            else:
+                messagebox.showinfo("Already Saved", "This route is already in your favorites.")
+            self._refresh_favorites_menu()
+
+        tk.Button(name_win, text="Save", font=("Helvetica", 11, "bold"),
+                  bg=GOLD, fg="#1a1200", relief="flat", padx=16, pady=6,
+                  cursor="hand2", command=do_save).pack(pady=12)
+
+    def _delete_favorite(self, index):
+        self.file_manager.delete_favorite(self.account.username, index)
+        self._refresh_favorites_menu()
+        messagebox.showinfo("Deleted", "Favorite route removed.")
+
     # ── booking action ────────────────────────────────────────────────────────
     def book_ride(self):
         vehicle_type = self.vehicle_var.get()
@@ -234,6 +391,14 @@ class BookingForm:
             )
             return
 
+        # Scheduled time
+        scheduled_time = None
+        try:
+            scheduled_time = self._parse_scheduled_time()
+        except ValueError as e:
+            messagebox.showerror("Schedule Error", str(e))
+            return
+
         base         = self._get_base_fare(vehicle_type, distance)
         surge        = self._current_surge()
         gross        = base * surge
@@ -255,13 +420,14 @@ class BookingForm:
         promo_txt  = f"\n🎟️ Promo {promo_code}: −₱{discount:.2f}" if promo_code else ""
         pax_txt    = f"\n👥 Passengers: {passengers}" if passengers > 1 else ""
         notes_txt  = f"\n📝 Notes: {notes[:60]}" if notes else ""
+        sched_txt  = f"\n🗓️ Scheduled: {scheduled_time}" if scheduled_time else ""
 
         confirm = messagebox.askyesno(
             "Confirm Booking",
             f"Vehicle: {vehicle_type}\n"
             f"From: {start} → To: {end}\n"
             f"Distance: {distance} km{pax_txt}{surge_txt}{promo_txt}\n"
-            f"Total Cost: ₱{est_cost:.2f}{notes_txt}\n\n"
+            f"Total Cost: ₱{est_cost:.2f}{notes_txt}{sched_txt}\n\n"
             "Confirm booking?"
         )
         if not confirm:
@@ -275,21 +441,24 @@ class BookingForm:
         booking = self.service.book_ride(
             self.account.name, vehicle_type, start, end, distance,
             passengers=passengers, notes=notes,
-            promo_code=promo_code, discount=discount
+            promo_code=promo_code, discount=discount,
+            scheduled_time=scheduled_time,
         )
         self.file_manager.save_bookings(self.service.get_all_bookings())
 
         # Update wallet label
         self.wallet_label.config(text=f"💳 Wallet Balance: ₱{self.account.wallet_balance:.2f}")
 
-        surge_msg  = f"\n🚀 Surge ×{booking.surge}" if booking.surge > 1.0 else ""
-        promo_msg  = f"\n🎟️ Discount: −₱{discount:.2f}" if promo_code else ""
+        status_word = "Scheduled" if scheduled_time else "Active"
+        surge_msg   = f"\n🚀 Surge ×{booking.surge}" if booking.surge > 1.0 else ""
+        promo_msg   = f"\n🎟️ Discount: −₱{discount:.2f}" if promo_code else ""
+        sched_msg   = f"\n🗓️ Pickup at: {scheduled_time}" if scheduled_time else ""
         messagebox.showinfo(
-            "Booking Confirmed! 🎉",
+            f"Booking {status_word}! 🎉",
             f"Ride booked successfully!\n"
             f"Driver: {booking.driver.name}\n"
             f"Plate: {booking.driver.plate}\n"
-            f"Total Cost: ₱{booking.total_cost:.2f}{surge_msg}{promo_msg}\n"
+            f"Total Cost: ₱{booking.total_cost:.2f}{surge_msg}{promo_msg}{sched_msg}\n"
             f"Remaining Balance: ₱{self.account.wallet_balance:.2f}"
         )
 
@@ -303,6 +472,9 @@ class BookingForm:
         self.passengers_var.set(1)
         self._discount      = 0.0
         self._promo_applied = None
+        self.sched_enable.set(False)
+        self.sched_status.config(text="")
         self.estimate_label.config(text="Enter distance to see estimate")
         self.surge_label.config(text="")
+        self.fav_var.set("— select a favorite —")
         self.refresh_callback()

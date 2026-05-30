@@ -40,3 +40,23 @@ class DriverManager:
                 self.save_drivers(drivers)
                 return True
         return False
+
+    def update_driver_rating(self, driver_id, new_rating):
+        """Recalculate driver's average rating after a new passenger rating."""
+        drivers = self.load_drivers()
+        for driver in drivers:
+            if driver["driver_id"] == driver_id:
+                current = driver.get("rating", 5.0)
+                count   = driver.get("rating_count", 1)
+                driver["rating"]       = round((current * count + new_rating) / (count + 1), 2)
+                driver["rating_count"] = count + 1
+                self.save_drivers(drivers)
+                return True
+        return False
+
+    def get_driver_stats(self, driver_id):
+        drivers = self.load_drivers()
+        for d in drivers:
+            if d["driver_id"] == driver_id:
+                return d
+        return {}

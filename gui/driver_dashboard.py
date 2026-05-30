@@ -29,7 +29,7 @@ class DriverDashboard:
 
         self.header_frame   = None
         self.notebook_frame = None
-        self._active_tab    = "rides"   # "rides" | "earnings"
+        self._active_tab    = "rides"   # "rides" | "earnings" | "profile"
 
         self.setup_header()
         self.setup_tabs()
@@ -91,13 +91,19 @@ class DriverDashboard:
             cursor="hand2", command=self._show_earnings_tab)
         self.tab_earn_btn.pack(side="left")
 
+        self.tab_profile_btn = tk.Button(
+            tab_bar, text="👤 My Profile",
+            font=("Helvetica", 11, "bold"), relief="flat", padx=20, pady=8,
+            cursor="hand2", command=self._show_profile_tab)
+        self.tab_profile_btn.pack(side="left")
+
         self.tab_content = tk.Frame(self.notebook_frame, bg=BG_DARK)
         self.tab_content.pack(fill="both", expand=True, padx=16, pady=12)
 
         self._show_rides_tab()
 
     def _set_tab_styles(self, active):
-        for btn, name in [(self.tab_rides_btn, "rides"), (self.tab_earn_btn, "earnings")]:
+        for btn, name in [(self.tab_rides_btn, "rides"), (self.tab_earn_btn, "earnings"), (self.tab_profile_btn, "profile")]:
             if name == active:
                 btn.config(bg=BG_DARK, fg=GOLD)
             else:
@@ -347,6 +353,100 @@ class DriverDashboard:
         earn_color = GREEN if b.status == "Completed" else GOLD_ACCENT
         tk.Label(card, text=f"₱{b.total_cost:.2f}",
                  font=("Helvetica", 13, "bold"), bg=BG_CARD, fg=earn_color).pack(anchor="e")
+
+
+    # ─────────────────────────────── PROFILE TAB ──────────────────────────────
+    def _show_profile_tab(self):
+        self._active_tab = "profile"
+        self._set_tab_styles("profile")
+        self._clear_content()
+        self._build_profile()
+
+    def _build_profile(self):
+        # Reload fresh driver data
+        drivers = self.driver_manager.load_drivers()
+        d_data  = next((d for d in drivers if d["driver_id"] == self.driver["driver_id"]), self.driver)
+
+        # All bookings for this driver
+        self.service = BookingService(self.file_manager)
+        my_bookings  = [b for b in self.service.get_all_bookings()
+                        if b.driver.driver_id == self.driver["driver_id"]]
+        completed    = [b for b in my_bookings if b.status == "Completed"]
+        total_earned = sum(b.total_cost for b in completed)
+        ride_count   = len(completed)
+        avg          = total_earned / ride_count if ride_count else 0.0
+        total_km     = sum(b.distance for b in completed)
+        rating       = d_data.get("rating", self.driver.get("rating", 5.0))
+        rating_count = d_data.get("rating_count", 0)
+
+        inner = self.tab_content
+
+        # Avatar + name
+        avatar_frame = tk.Frame(inner, bg=BG_CARD, pady=20)
+        avatar_frame.pack(fill="x", pady=(0, 12))
+        tk.Label(avatar_frame, text="🧑‍✈️",
+                 font=("Helvetica", 48), bg=BG_CARD).pack()
+        tk.Label(avatar_frame, text=d_data.get("name", self.driver["name"]),
+                 font=("Helvetica", 16, "bold"), bg=BG_CARD, fg=GOLD).pack()
+        tk.Label(avatar_frame, text=f"🚗 {d_data.get('plate', self.driver['plate'])}",
+                 font=("Helvetica", 12), bg=BG_CARD, fg=GOLD_ACCENT).pack()
+
+        # Rating display
+        stars = int(round(rating))
+        tk.Label(avatar_frame, text=f"{'★' * stars}{'☆' * (5 - stars)}",
+                 font=("Helvetica", 20), bg=BG_CARD, fg=GOLD).pack()
+        tk.Label(avatar_frame, text=f"{rating:.2f} avg  ({rating_count} ratings)",
+                 font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_GRAY).pack()
+
+        # Stats row
+        stats_row = tk.Frame(inner, bg=BG_DARK)
+        stats_row.pack(fill="x", pady=4)
+
+        def stat(parent, icon, label, value, color=GOLD):
+            fr = tk.Frame(parent, bg=BG_CARD, padx=16, pady=12)
+            fr.pack(side="left", expand=True, fill="x", padx=5)
+            tk.Label(fr, text=icon,  font=("Helvetica", 18), bg=BG_CARD, fg=color).pack()
+            tk.Label(fr, text=value, font=("Helvetica", 14, "bold"), bg=BG_CARD, fg=color).pack()
+            tk.Label(fr, text=label, font=("Helvetica", 8),  bg=BG_CARD, fg=TEXT_GRAY).pack()
+
+        stat(stats_row, "✅", "Rides Completed", str(ride_count),          GREEN)
+        stat(stats_row, "💰", "Total Earned",    f"₱{total_earned:.2f}",  GREEN)
+        stat(stats_row, "📏", "Total Distance",  f"{total_km:.1f} km",    GOLD_ACCENT)
+        stat(stats_row, "💳", "Avg per Ride",    f"₱{avg:.2f}",           GOLD)
+
+        # Vehicle type breakdown
+        tk.Label(inner, text="Rides by Vehicle Type",
+                 font=("Helvetica", 11, "bold"), bg=BG_DARK, fg=GOLD_ACCENT).pack(pady=(16, 4))
+
+        by_v = {}
+        for b in completed:
+            vname = b.vehicle.name
+            by_v[vname] = by_v.get(vname, 0) + 1
+
+        if by_v:
+            total_v = sum(by_v.values()) or 1
+            bar_frame = tk.Frame(inner, bg=BG_CARD, padx=16, pady=12)
+            bar_frame.pack(fill="x", padx=10)
+            icons  = {"Car": "🚗", "Van": "🚐", "Bike": "🏍️"}
+            colors = {"Car": GOLD, "Van": "#00bcd4", "Bike": GREEN}
+            for vname, count in sorted(by_v.items(), key=lambda x: x[1], reverse=True):
+                pct = count / total_v
+                row = tk.Frame(bar_frame, bg=BG_CARD); row.pack(fill="x", pady=3)
+                tk.Label(row, text=f"{icons.get(vname,'🚗')} {vname}",
+                         font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_WHITE,
+                         width=8, anchor="w").pack(side="left")
+                bar_outer = tk.Frame(row, bg="#3d2a00", height=16)
+                bar_outer.pack(side="left", fill="x", expand=True, padx=8)
+                bar_outer.pack_propagate(False)
+                bar_inner = tk.Frame(bar_outer, bg=colors.get(vname, GOLD), height=16)
+                bar_inner.place(relwidth=pct, relheight=1.0)
+                tk.Label(row, text=f"{count} ride{'s' if count != 1 else ''} ({pct*100:.0f}%)",
+                         font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY,
+                         width=18, anchor="e").pack(side="left")
+        else:
+            tk.Label(inner, text="Accept and complete rides to see your breakdown.",
+                     font=("Helvetica", 10), bg=BG_DARK, fg=TEXT_GRAY).pack(pady=8)
+
 
     # ─────────────────────────────── MISC ─────────────────────────────────────
     def refresh_all(self):

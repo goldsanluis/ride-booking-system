@@ -35,6 +35,7 @@ class BookingService:
                     notes=item.get("notes", ""),
                     promo_code=item.get("promo_code", None),
                     discount=item.get("discount", 0.0),
+                    scheduled_time=item.get("scheduled_time", None),
                 )
                 booking.total_cost = item["total_cost"]
                 booking.date = item["date"]
@@ -50,7 +51,7 @@ class BookingService:
                 self.bookings.append(booking)
 
     def book_ride(self, user, vehicle_type, start_location, end_location, distance,
-                  passengers=1, notes="", promo_code=None, discount=0.0):
+                  passengers=1, notes="", promo_code=None, discount=0.0, scheduled_time=None):
         vehicle = self.get_vehicle(vehicle_type)
         if not vehicle:
             return "Invalid vehicle type!"
@@ -58,7 +59,8 @@ class BookingService:
             self.next_id, user, vehicle,
             start_location, end_location, distance,
             passengers=passengers, notes=notes,
-            promo_code=promo_code, discount=discount
+            promo_code=promo_code, discount=discount,
+            scheduled_time=scheduled_time,
         )
         self.bookings.append(booking)
         self.next_id += 1
@@ -106,3 +108,37 @@ class BookingService:
             if booking.booking_id == booking_id:
                 return booking
         return None
+
+    # NEW: search bookings by keyword in locations
+    def search_user_bookings(self, username, keyword):
+        keyword = keyword.lower()
+        return [
+            b for b in self.get_user_bookings(username)
+            if keyword in b.start_location.lower() or keyword in b.end_location.lower()
+               or keyword in (b.notes or "").lower()
+        ]
+
+    # NEW: get spending stats for a user
+    def get_user_stats(self, username):
+        bookings = self.get_user_bookings(username)
+        completed = [b for b in bookings if b.status == "Completed"]
+        total_spent = sum(b.total_cost for b in completed)
+        by_vehicle = {}
+        for b in completed:
+            vname = b.vehicle.name
+            by_vehicle[vname] = by_vehicle.get(vname, 0.0) + b.total_cost
+        avg_fare = total_spent / len(completed) if completed else 0.0
+        total_distance = sum(b.distance for b in completed)
+        ratings_given = [b.rating for b in completed if b.rating]
+        avg_rating = sum(ratings_given) / len(ratings_given) if ratings_given else None
+        return {
+            "total_bookings": len(bookings),
+            "completed": len(completed),
+            "cancelled": len([b for b in bookings if b.status == "Cancelled"]),
+            "active": len([b for b in bookings if b.status in ("Active", "Scheduled")]),
+            "total_spent": total_spent,
+            "avg_fare": avg_fare,
+            "total_distance": total_distance,
+            "by_vehicle": by_vehicle,
+            "avg_rating_given": avg_rating,
+        }
