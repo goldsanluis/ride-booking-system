@@ -285,7 +285,7 @@
         "discount": 0.0,
         "total_cost": 81.0,
         "date": "2026-05-30 17:51:08",
-        "status": "Active",
+        "status": "Cancelled",
         "driver_id": "unassigned",
         "driver_name": "Unassigned",
         "driver_plate": "Unassigned",

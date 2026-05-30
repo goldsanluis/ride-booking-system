@@ -1,4 +1,4 @@
-import tkinter as tk
+﻿code = '''import tkinter as tk
 from tkinter import messagebox
 from gui.booking_form import BookingForm
 from gui.booking_list import BookingList
@@ -114,7 +114,7 @@ class MainWindow:
         msg = ""
         for n in mine[-5:][::-1]:
             status = "[NEW] " if not n.get("seen") else ""
-            msg += f"{status}{n.get(chr(109)+chr(101)+chr(115)+chr(115)+chr(97)+chr(103)+chr(101), chr(78)+chr(111)+chr(32)+chr(109)+chr(101)+chr(115)+chr(115)+chr(97)+chr(103)+chr(101))}\n\n"
+            msg += f"{status}{n.get(chr(109)+chr(101)+chr(115)+chr(115)+chr(97)+chr(103)+chr(101), chr(78)+chr(111)+chr(32)+chr(109)+chr(101)+chr(115)+chr(115)+chr(97)+chr(103)+chr(101))}\\n\\n"
         for n in notifs:
             if n.get("user") == self.account.name:
                 n["seen"] = True
@@ -180,3 +180,8 @@ class MainWindow:
 
     def run(self):
         self.root.mainloop()
+'''
+
+with open("gui/main_window.py", "w", encoding="utf-8") as f:
+    f.write(code)
+print("Done!")
