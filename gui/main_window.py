@@ -1,4 +1,4 @@
-﻿import tkinter as tk
+import tkinter as tk
 from tkinter import messagebox
 from gui.booking_form import BookingForm
 from gui.booking_list import BookingList
@@ -32,7 +32,7 @@ class MainWindow:
 
         tk.Label(
             title_frame,
-            text="ðŸš— Ride Booking System",
+            text="🚗 Ride Booking System",
             font=("Helvetica", 20, "bold"),
             bg="#2d1f00",
             fg="#FFD700"
@@ -40,7 +40,7 @@ class MainWindow:
 
         tk.Button(
             title_frame,
-            text="Logout ðŸšª",
+            text="Logout 🚪",
             font=("Helvetica", 10, "bold"),
             bg="#B8860B",
             fg="white",
@@ -52,7 +52,7 @@ class MainWindow:
 
         tk.Button(
             title_frame,
-            text="ðŸ”„ Refresh",
+            text="🔄 Refresh",
             font=("Helvetica", 10, "bold"),
             bg="#FFA500",
             fg="white",
@@ -64,7 +64,7 @@ class MainWindow:
 
         self.notif_btn = tk.Button(
             title_frame,
-            text="ðŸ”” Notifications",
+            text="🔔 Notifications",
             font=("Helvetica", 10, "bold"),
             bg="#2d1f00",
             fg="#FFD700",
@@ -72,13 +72,26 @@ class MainWindow:
             padx=10,
             pady=5,
             cursor="hand2",
-            command=self.show_notifications
+            command=self._open_notification_center
         )
         self.notif_btn.pack(side="right", padx=5)
 
+        tk.Button(
+            title_frame,
+            text="💳 Payment",
+            font=("Helvetica", 10, "bold"),
+            bg="#2d1f00",
+            fg="#4ecca3",
+            relief="flat",
+            padx=10,
+            pady=5,
+            cursor="hand2",
+            command=self._open_payment_methods
+        ).pack(side="right", padx=5)
+
         tk.Label(
             header,
-            text=f"Welcome, {self.account.name}! ðŸ‘‘",
+            text=f"Welcome, {self.account.name}! 👑",
             font=("Helvetica", 11),
             bg="#2d1f00",
             fg="#FFA500"
@@ -87,18 +100,14 @@ class MainWindow:
         self._refresh_notif_badge()
 
     def _refresh_notif_badge(self):
-        nf = os.path.join("data", "notifications.json")
-        if not os.path.exists(nf):
-            return
         try:
-            with open(nf) as f:
-                notifs = json.load(f)
-            unread = [n for n in notifs if n.get("user") == self.account.name and not n.get("seen")]
-            if unread:
-                self.notif_btn.config(fg="#FF4444", text=f"ðŸ”” ({len(unread)}) Notifications")
+            import services.notification_service as ns
+            count = ns.get_unread_count(self.account.username)
+            if count > 0:
+                self.notif_btn.config(fg="#FF4444", text=f"🔔 ({count}) Notifications")
             else:
-                self.notif_btn.config(fg="#FFD700", text="ðŸ”” Notifications")
-        except:
+                self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
+        except Exception:
             pass
         self.root.after(5000, self._refresh_notif_badge)
 
@@ -123,7 +132,7 @@ class MainWindow:
                 n["seen"] = True
         with open(nf, "w") as f:
             json.dump(notifs, f, indent=2)
-        self.notif_btn.config(fg="#FFD700", text="ðŸ”” Notifications")
+        self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
         messagebox.showinfo(f"Notifications ({len(unread)} new)", msg.strip())
 
     def setup_tabs(self):
@@ -158,8 +167,19 @@ class MainWindow:
         self.wallet_panel.frame.pack(fill="x", pady=5)
 
         self.booking_list = BookingList(tab_frame, self.service, self.account)
-        self.booking_list.account_manager = self.account_manager
         self.booking_list.frame.pack(side="right", fill="both", expand=True, padx=5)
+
+
+    def _open_notification_center(self):
+        from gui.notification_center import NotificationCenter
+        import services.notification_service as ns
+        ns.mark_all_seen(self.account.username)
+        self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
+        NotificationCenter(self.root, self.account.username)
+
+    def _open_payment_methods(self):
+        from gui.payment_methods_window import PaymentMethodsWindow
+        PaymentMethodsWindow(self.root, self.account.username)
 
     def refresh(self):
         self.booking_list.refresh()
@@ -184,4 +204,3 @@ class MainWindow:
 
     def run(self):
         self.root.mainloop()
-

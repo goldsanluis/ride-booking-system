@@ -1,4 +1,4 @@
-﻿code = '''import tkinter as tk
+code = '''import tkinter as tk
 from tkinter import messagebox
 from gui.booking_form import BookingForm
 from gui.booking_list import BookingList

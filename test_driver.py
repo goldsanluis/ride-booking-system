@@ -1,4 +1,4 @@
-﻿from models.driver import Driver
+from models.driver import Driver
 
 # Test if driver_id parameter works
 try:

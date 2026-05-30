@@ -195,7 +195,7 @@ class DriverDashboard:
             import os as _os, json as _json
             _nf = _os.path.join('data', 'notifications.json')
             _notifs = _json.load(open(_nf)) if _os.path.exists(_nf) else []
-            _notifs.append({'user': booking.user, 'message': f'Driver {self.driver[chr(34)]name{chr(34)]} ({self.driver[chr(34)]plate{chr(34)]}) accepted your ride!', 'booking_id': booking.booking_id, 'seen': False})
+            _notifs.append({'user': booking.user, 'message': f"Driver {self.driver['name']} ({self.driver['plate']}) accepted your ride!", 'booking_id': booking.booking_id, 'seen': False})
             _json.dump(_notifs, open(_nf, 'w'), indent=2)
             self.driver_manager.update_driver_wallet(self.driver["driver_id"], booking.total_cost)
             self.driver["wallet_balance"] = self.driver.get("wallet_balance", 0.0) + booking.total_cost

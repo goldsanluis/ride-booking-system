@@ -1,4 +1,4 @@
-﻿with open('ride-booking-system-main/gui/driver_dashboard.py', 'r', encoding='utf-8') as f:
+with open('ride-booking-system-main/gui/driver_dashboard.py', 'r', encoding='utf-8') as f:
     code = f.read()
 
 bad = "_notifs.append({'user': booking.user, 'message': f'Driver {self.driver[chr(34)]name{chr(34)]} ({self.driver[chr(34)]plate{chr(34)]}) accepted your ride!', 'booking_id': booking.booking_id, 'seen': False})"

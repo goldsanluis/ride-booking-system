@@ -256,6 +256,13 @@ class LoginWindow:
             messagebox.showerror("Error", "Please fill in all fields!")
             return
 
+        # Admin login check
+        from gui.admin_dashboard import is_admin, AdminDashboard
+        if is_admin(username, password):
+            self.root.destroy()
+            AdminDashboard().run()
+            return
+
         account, message = self.account_manager.login(username, password)
         if account:
             self.logged_in_account = account

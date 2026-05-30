@@ -1,4 +1,4 @@
-﻿class Account:
+class Account:
     def __init__(self, user_id, username, password, name, wallet_balance=5000.0):
         self.user_id = user_id
         self.username = username

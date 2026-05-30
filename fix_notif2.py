@@ -1,4 +1,4 @@
-﻿with open('gui/main_window.py', 'r', encoding='utf-8') as f:
+with open('gui/main_window.py', 'r', encoding='utf-8') as f:
     code = f.read()
 
 notif_btn = '''

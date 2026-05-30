@@ -1,4 +1,4 @@
-﻿from models.booking import Booking
+from models.booking import Booking
 from models.car import Car
 from models.van import Van
 from models.bike import Bike

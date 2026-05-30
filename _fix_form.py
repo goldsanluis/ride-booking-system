@@ -1,4 +1,4 @@
-﻿content = open('gui/booking_form.py', encoding='utf-8').read()
+content = open('gui/booking_form.py', encoding='utf-8').read()
 arrow = '\u00e2\u0086\u0092'
 peso  = '\u00e2\u0082\u00b1'
 old = ('        confirm = messagebox.askyesno(\n'

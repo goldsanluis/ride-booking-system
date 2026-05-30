@@ -1,4 +1,4 @@
-﻿import tkinter as tk
+import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime, timedelta
 from services.promo_service import apply_promo, list_promos
@@ -167,6 +167,25 @@ class BookingForm:
                   "🚀 Surge: 1.5x (7-9 AM, 5-8 PM)"]:
             tk.Label(pf, text=t, font=("Helvetica", 9),
                      bg="#3d2a00", fg=GOLD_ACCENT).pack(anchor="w")
+
+        # Payment method selector
+        pm_frame = tk.Frame(self.frame, bg="#002233", padx=8, pady=6)
+        pm_frame.pack(fill="x", pady=(8, 0))
+        pm_top = tk.Frame(pm_frame, bg="#002233"); pm_top.pack(fill="x")
+        tk.Label(pm_top, text="💳 Payment Method:",
+                 font=("Helvetica", 10, "bold"), bg="#002233", fg="#4ecca3").pack(side="left")
+
+        import services.payment_service as ps
+        methods = ps.get_methods(self.account.username)
+        self.payment_var = tk.StringVar()
+        default_m = ps.get_default(self.account.username)
+        self.payment_var.set(default_m.get("label", "Ride Wallet"))
+        pm_menu = tk.OptionMenu(pm_frame, self.payment_var,
+                                *[m["label"] for m in methods])
+        pm_menu.config(font=("Helvetica", 9), bg="#3d2a00", fg="white",
+                       relief="flat", bd=0, highlightthickness=0)
+        pm_menu["menu"].config(bg="#3d2a00", fg="white", font=("Helvetica", 9))
+        pm_menu.pack(fill="x", pady=4)
 
         self.wallet_label = tk.Label(
             self.frame,
@@ -430,6 +449,12 @@ class BookingForm:
             scheduled_time=scheduled_time,
         )
         self.file_manager.save_bookings(self.service.get_all_bookings())
+
+        # Push booking notification
+        import services.notification_service as notif_svc
+        notif_svc.push(self.account.username,
+                       f"Booking #{booking.booking_id} confirmed! Driver: {booking.driver.name} ({booking.driver.plate}). Total: ₱{booking.total_cost:.2f}",
+                       category="ride", booking_id=booking.booking_id)
 
         self.wallet_label.config(text=f"💳 Wallet Balance: P{self.account.wallet_balance:.2f}")
 

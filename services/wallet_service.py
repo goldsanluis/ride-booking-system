@@ -1,4 +1,4 @@
-﻿class WalletService:
+class WalletService:
     def __init__(self, account_manager, driver_manager):
         self.account_manager = account_manager
         self.driver_manager = driver_manager

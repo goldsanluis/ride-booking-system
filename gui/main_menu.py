@@ -1,4 +1,4 @@
-﻿import tkinter as tk
+import tkinter as tk
 from tkinter import messagebox
 from gui.login_window import LoginWindow
 from gui.driver_login import DriverLoginWindow

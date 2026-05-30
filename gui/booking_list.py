@@ -275,6 +275,10 @@ class BookingList:
                       font=("Helvetica", 9, "bold"), bg=GREEN, fg="white",
                       relief="flat", padx=8, pady=4, cursor="hand2",
                       command=lambda b=booking: self._complete(b)).pack(side="left", padx=2)
+            tk.Button(btn_row, text="📍 Track",
+                      font=("Helvetica", 9, "bold"), bg=TEAL, fg="white",
+                      relief="flat", padx=8, pady=4, cursor="hand2",
+                      command=lambda b=booking: self._track(b)).pack(side="left", padx=2)
             tk.Button(btn_row, text="❌ Cancel",
                       font=("Helvetica", 9, "bold"), bg=RED, fg="white",
                       relief="flat", padx=8, pady=4, cursor="hand2",
@@ -298,9 +302,31 @@ class BookingList:
 
     # ── actions ────────────────────────────────────────────────────────────────
     def _cancel(self, booking):
-        if messagebox.askyesno("Cancel Booking", f"Cancel booking #{booking.booking_id}?"):
-            msg = self.service.cancel_booking(booking.booking_id, self.account.username)
-            self._save(); messagebox.showinfo("Success", msg); self.refresh()
+        # Calculate refund policy: full refund if >15 min before scheduled, 50% if active
+        refund_pct = 100
+        if booking.status == "Active":
+            refund_pct = 50
+        refund_amt = booking.total_cost * refund_pct / 100
+
+        confirm_msg = (f"Cancel booking #{booking.booking_id}?\nRefund: ₱{refund_amt:.2f} ({refund_pct}%) will be returned to your wallet.")
+        if messagebox.askyesno("Cancel Booking", confirm_msg):
+            result = self.service.cancel_booking(booking.booking_id, self.account.username)
+            if isinstance(result, tuple):
+                msg, _ = result
+            else:
+                msg = result
+            # Apply refund
+            self.account.wallet_balance += refund_amt
+            from file_handler.account_manager import AccountManager
+            AccountManager().update_account(self.account)
+            # Send refund notification
+            import services.notification_service as notif_svc
+            notif_svc.push(self.account.username,
+                           f"Booking #{booking.booking_id} cancelled. ₱{refund_amt:.2f} refunded.",
+                           category="refund", booking_id=booking.booking_id)
+            self._save()
+            messagebox.showinfo("Cancelled", msg)
+            self.refresh()
 
     def _complete(self, booking):
         if messagebox.askyesno("Complete Booking",
@@ -308,6 +334,10 @@ class BookingList:
             msg = self.service.complete_booking(booking.booking_id, self.account.username)
             if booking.driver.driver_id and booking.driver.driver_id != "unassigned":
                 self.driver_manager.update_driver_wallet(booking.driver.driver_id, booking.total_cost)
+            import services.notification_service as notif_svc
+            notif_svc.push(self.account.username,
+                           f"Ride #{booking.booking_id} completed! Please rate your driver {booking.driver.name}.",
+                           category="ride", booking_id=booking.booking_id)
             self._save(); messagebox.showinfo("Success", msg); self.refresh()
 
     def _activate(self, booking):
@@ -378,6 +408,12 @@ class BookingList:
                   font=("Helvetica", 11, "bold"), bg=GOLD, fg="#1a1200",
                   relief="flat", padx=16, pady=8, cursor="hand2",
                   command=submit).pack(pady=(4, 16))
+
+    def _track(self, booking):
+        from gui.tracking_window import TrackingWindow
+        def on_done():
+            pass  # user can manually complete after tracking
+        TrackingWindow(self.frame, booking, on_complete_callback=on_done)
 
     def _save(self):
         from file_handler.file_manager import FileManager

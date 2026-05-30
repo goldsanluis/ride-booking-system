@@ -1,4 +1,4 @@
-﻿content = open('gui/booking_form.py', encoding='utf-8').read()
+content = open('gui/booking_form.py', encoding='utf-8').read()
 old = ('        confirm = messagebox.askyesno(\n'
        '            "Confirm Booking",\n'
        '            f"Vehicle: {vehicle_type}\\n"\n'
