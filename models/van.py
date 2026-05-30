@@ -1,12 +1,38 @@
+"""
+models/van.py
+-------------
+Van vehicle type — large vehicle for groups of up to 10 passengers.
+Inherits from Vehicle and overrides calculate_cost() with a higher base fare.
+"""
+
 from models.vehicle import Vehicle
 
+
 class Van(Vehicle):
+    """
+    Large van: seats up to 10 passengers.
+    Pricing: ₱80 base fare + ₱20 per km.
+    """
+
     def __init__(self, vehicle_id, capacity=10):
+        # Pass van-specific values up to the Vehicle constructor
         super().__init__(vehicle_id, "Van", capacity, cost_per_km=20.0)
 
     def calculate_cost(self, distance):
-        # Base fare ₱80 + ₱20/km
-        return 80.0 + (self.cost_per_km * distance)
+        """
+        Polymorphic override: Van fare = ₱80 flag-down + ₱20/km.
+        Higher rates reflect the larger vehicle size and fuel cost.
+
+        Args:
+            distance (float): Trip distance in kilometres.
+
+        Returns:
+            float: Total fare in ₱.
+        """
+        base_fare = 80.0  # Higher flag-down for larger vehicle
+        return base_fare + (self.cost_per_km * distance)
 
     def __str__(self):
-        return f"Van (Capacity: {self.capacity}, Base fare: ₱80, Cost per km: ₱{self.cost_per_km})"
+        return (f"Van (Capacity: {self.capacity}, "
+                f"Base fare: ₱80, "
+                f"Cost per km: ₱{self.cost_per_km})")
