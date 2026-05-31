@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 from file_handler.driver_manager import DriverManager
+
 
 BG_DARK     = "#1a1200"
 BG_CARD     = "#2d1f00"
@@ -14,6 +16,7 @@ TEAL        = "#00bcd4"
 RED         = "#FF6B6B"
 
 class BookingList:
+
     def __init__(self, parent, service, account):
         self.service        = service
         self.account        = account
@@ -64,8 +67,28 @@ class BookingList:
         self._build_bookings_ui()
 
     def _build_bookings_ui(self):
+        # ── Actions row (Export) ─────────────────────────────────────────────
+        action_frame = tk.Frame(self.content_frame, bg=BG_DARK, padx=8, pady=6)
+
+        action_frame.pack(fill="x", padx=5)
+
+        tk.Button(
+            action_frame,
+            text="🧾 Export Bookings",
+            font=("Helvetica", 10, "bold"),
+            bg="#B8860B",
+            fg="white",
+            relief="flat",
+            padx=12,
+            pady=6,
+            cursor="hand2",
+            command=self._export_bookings,
+        ).pack(side="right")
+
+
         # ── Search bar ─────────────────────────────────────────────────────────
         search_frame = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=6)
+
         search_frame.pack(fill="x", padx=5, pady=(6, 0))
         tk.Label(search_frame, text="🔍", font=("Helvetica", 12),
                  bg=BG_CARD, fg=GOLD).pack(side="left")
@@ -486,8 +509,93 @@ class BookingList:
                   cursor="hand2",
                   command=lambda: self._copy_receipt(win, booking)).pack(pady=(4, 12))
 
+    def _export_bookings(self):
+        try:
+            all_bookings = self.service.get_user_bookings(self.account.username)
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Could not load booking history: {e}")
+            return
+
+        if not all_bookings:
+            messagebox.showinfo("Export Bookings", "No bookings to export.")
+            return
+
+        # Apply current filters for a better user experience
+        try:
+            filtered = self._filter_bookings(sorted(all_bookings, key=lambda b: b.date, reverse=True))
+        except Exception:
+            filtered = all_bookings
+
+        default_name = f"booking_history_{self.account.username}.txt"
+        file_path = filedialog.asksaveasfilename(
+            title="Export Bookings",
+            defaultextension=".txt",
+            initialfile=default_name,
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+        )
+        if not file_path:
+            return
+
+        def receipt_text(b):
+            base = b.vehicle.calculate_cost(b.distance)
+            surge_line = ""
+            if getattr(b, "surge", 1.0) > 1.0:
+                surge_line = f"Surge (×{b.surge}): +₱{(base * b.surge - base):.2f}\n"
+            promo_line = ""
+            if getattr(b, "discount", 0) > 0:
+                promo_line = f"Promo ({getattr(b, 'promo_code', '')}): −₱{b.discount:.2f}\n"
+            pax_line = ""
+            if getattr(b, "passengers", 1) > 1:
+                pax_line = f"Passengers: {b.passengers}\n"
+            sched_line = ""
+            if getattr(b, "scheduled_time", None):
+                sched_line = f"Scheduled For: {b.scheduled_time}\n"
+            rating_line = ""
+            if getattr(b, "rating", None):
+                rating_line = f"Your rating: {'⭐' * b.rating}\n"
+
+            notes_line = ""
+            if getattr(b, "notes", ""):
+                notes = b.notes.strip()
+                notes_line = f"Notes: {notes}\n"
+
+            return (
+                "=== RIDE RECEIPT ===\n"
+                f"Booking ID: #{b.booking_id}\n"
+                f"Date: {b.date}\n"
+                f"Passenger: {b.user}\n"
+                f"Driver: {b.driver.name} ({b.driver.plate})\n"
+                f"Vehicle: {b.vehicle.name}\n"
+                f"From: {b.start_location}\n"
+                f"To: {b.end_location}\n"
+                f"Distance: {b.distance} km\n"
+                f"Status: {b.status}\n"
+                f"{pax_line}{sched_line}"
+                "--------------------\n"
+                f"Base Fare: ₱{base:.2f}\n"
+                f"{surge_line}{promo_line}"
+                f"TOTAL PAID: ₱{b.total_cost:.2f}\n"
+                "--------------------\n"
+                f"{rating_line}{notes_line}"
+                "--------------------\n\n"
+            )
+
+        text = ""
+        for b in filtered:
+            text += receipt_text(b)
+
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(text)
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Could not write file: {e}")
+            return
+
+        messagebox.showinfo("Export Complete", f"Exported {len(filtered)} booking(s) to:\n{file_path}")
+
     def _copy_receipt(self, parent, b):
         base       = b.vehicle.calculate_cost(b.distance)
+
         surge_line = f"Surge (×{b.surge}): +₱{(base*b.surge-base):.2f}\n" if b.surge > 1.0 else ""
         promo_line = f"Promo ({b.promo_code}): -₱{b.discount:.2f}\n" if getattr(b, "discount", 0) > 0 else ""
         pax_line   = f"Passengers: {b.passengers}\n" if getattr(b, "passengers", 1) > 1 else ""

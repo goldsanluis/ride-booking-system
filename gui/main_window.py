@@ -91,7 +91,15 @@ class MainWindow:
             command=self._open_payment_methods
         ).pack(side="right", padx=5)
 
+
+
+
+
+
+
+
         tk.Label(
+
             header,
             text=f"Welcome, {self.account.name}! 👑",
             font=("Helvetica", 11),
@@ -191,7 +199,29 @@ class MainWindow:
         from gui.payment_methods_window import PaymentMethodsWindow
         PaymentMethodsWindow(self.root, self.account.username)
 
+    def _open_about(self):
+        from gui.about_window import AboutWindow
+
+        app_name = "Ride Booking System"
+        app_version = "1.0"
+        section = "BSCPE 1-5"
+        group_members = [
+            "Domingo, Franco Luis",
+            "Gacu, Laiza May M.",
+            "Luna, Sybella Llorin B.",
+            "Mamaril, Jayson Cris L.",
+            "Mejia, Aayel",
+            "Mesias, Lewell",
+            "Pangandaman, Najer D.",
+            "Sabida, Ghale Anne",
+            "San Luis, Ghani Regina Gold B.",
+            "Tatlonghari, Jan Druelle",
+        ]
+
+        AboutWindow(self.root, app_name, app_version, group_members, section)
+
     def refresh(self):
+
         self.booking_list.refresh()
 
     def refresh_bookings(self):
