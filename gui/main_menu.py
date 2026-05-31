@@ -4,7 +4,14 @@ gui/main_menu.py
 First screen the user sees after launching the app.
 Presents two role buttons — Passenger and Driver — and routes
 the user to the appropriate login window based on their choice.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 
 import tkinter as tk
 from gui.login_window      import LoginWindow

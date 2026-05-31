@@ -3,7 +3,14 @@ models/bike.py
 --------------
 Bike vehicle type — motorcycle for solo riders, cheapest option.
 Inherits from Vehicle and overrides calculate_cost() with the lowest fare structure.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 
 from models.vehicle import Vehicle
 

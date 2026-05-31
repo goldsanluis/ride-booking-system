@@ -1,6 +1,17 @@
+"""gui/about_window.py
+-----------------------
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
+"""
+
 import tkinter as tk
 
 BG_DARK     = "#1a1200"
+
 BG_CARD     = "#2d1f00"
 GOLD        = "#FFD700"
 GOLD_ACCENT = "#FFA500"

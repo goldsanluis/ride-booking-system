@@ -3,7 +3,14 @@ models/car.py
 -------------
 Car vehicle type — standard sedan for up to 4 passengers.
 Inherits from Vehicle and overrides calculate_cost() to apply a base flag-down fare.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 
 from models.vehicle import Vehicle
 

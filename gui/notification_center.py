@@ -1,6 +1,13 @@
 """
 Full-featured Notification Center window.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 import tkinter as tk
 from tkinter import messagebox
 import services.notification_service as ns

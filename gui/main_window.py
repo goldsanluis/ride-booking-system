@@ -1,6 +1,17 @@
+"""gui/main_window.py
+-----------------------
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
+"""
+
 import tkinter as tk
 from tkinter import messagebox
 from gui.booking_form import BookingForm
+
 from gui.booking_list import BookingList
 from gui.wallet_panel import WalletPanel
 from services.booking_service import BookingService

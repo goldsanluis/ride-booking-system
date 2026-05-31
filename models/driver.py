@@ -3,7 +3,14 @@ models/driver.py
 ----------------
 Represents a driver assigned to a booking.
 Includes a static roster of available drivers and a helper to pick one at random.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 
 import random
 

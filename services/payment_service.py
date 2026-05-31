@@ -1,7 +1,14 @@
 """
 Multiple payment methods service.
 Stores payment methods per user in data/payment_methods.json
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 import json, os
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")

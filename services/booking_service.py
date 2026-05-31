@@ -61,7 +61,12 @@ class BookingService:
         """
         data = self.file_manager.load_bookings()
         for item in data:
+            # Skip hidden meta watermark record (stored as a special list element)
+            if isinstance(item, dict) and item.get("_meta") is not None:
+                continue
+
             vehicle = self.get_vehicle(item["vehicle_type"])
+
             if not vehicle:
                 continue  # Skip corrupted / unknown vehicle records
 

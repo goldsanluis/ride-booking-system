@@ -1,7 +1,14 @@
 """
 Admin Dashboard — accessible from login with special admin credentials.
 Manages: users, promos, drivers, bookings stats, broadcast notifications.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 from file_handler.file_manager import FileManager

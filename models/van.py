@@ -3,7 +3,14 @@ models/van.py
 -------------
 Van vehicle type — large vehicle for groups of up to 10 passengers.
 Inherits from Vehicle and overrides calculate_cost() with a higher base fare.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 
 from models.vehicle import Vehicle
 

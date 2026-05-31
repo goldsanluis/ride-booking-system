@@ -3,7 +3,14 @@ models/booking.py
 -----------------
 Represents a single ride booking made by a passenger.
 Handles fare calculation, surge pricing, promo discounts, and status transitions.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 
 from datetime import datetime
 from models.driver import Driver

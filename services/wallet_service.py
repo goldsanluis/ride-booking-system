@@ -1,4 +1,16 @@
+"""services/wallet_service.py
+----------------------------
+Watermark signature (hidden).
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
+"""
+
 class WalletService:
+
     def __init__(self, account_manager, driver_manager):
         self.account_manager = account_manager
         self.driver_manager = driver_manager

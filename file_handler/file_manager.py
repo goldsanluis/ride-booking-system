@@ -7,7 +7,14 @@ to JSON files in the data/ directory.
 This module is the main persistence layer for the booking system —
 all booking objects are serialised to JSON here so that data
 survives between application sessions.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 
 import json
 import os
@@ -100,8 +107,21 @@ class FileManager:
                 "driver_id":     b.driver.driver_id,
             })
 
+        # Hidden meta watermark (stored as a special first record in the list)
+        # to avoid breaking backward compatibility with existing JSON schema.
+        data.insert(0, {
+            "_meta": {
+                "author": "Ghani Regina Gold San Luis",
+                "group": "Group 6",
+                "course": "CMPE 103 - Object Oriented Programming",
+                "school": "Polytechnic University of the Philippines",
+                "github": "https://github.com/your-username/ride-booking-system"
+            }
+        })
+
         with open(BOOKINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+
 
     # ── Favourites (per-user saved routes) ────────────────────────────────────
 

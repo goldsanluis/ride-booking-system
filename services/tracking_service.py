@@ -1,7 +1,14 @@
 """
 Simulated real-time ride tracking service.
 Since this is a local desktop app, tracking is simulated with timed status updates.
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
 """
+
 import threading, time, random
 from datetime import datetime
 

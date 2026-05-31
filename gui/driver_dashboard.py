@@ -1,6 +1,17 @@
+"""gui/driver_dashboard.py
+--------------------------
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
+"""
+
 import tkinter as tk
 from tkinter import messagebox
 from services.booking_service import BookingService
+
 from file_handler.file_manager import FileManager
 from file_handler.driver_manager import DriverManager
 from models.driver import Driver

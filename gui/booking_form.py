@@ -1,6 +1,17 @@
+"""gui/booking_form.py
+-----------------------
+
+author = "Ghani Regina Gold San Luis"
+group = "Group 6"
+course = "CMPE 103 - Object Oriented Programming"
+school = "Polytechnic University of the Philippines"
+github = "https://github.com/your-username/ride-booking-system"
+"""
+
 import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime, timedelta
+
 from services.promo_service import apply_promo, list_promos
 
 BG_DARK     = "#2d1f00"
