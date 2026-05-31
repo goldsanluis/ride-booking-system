@@ -12,6 +12,8 @@ class MainWindow:
     def __init__(self, account):
         self.account = account
         self.root = tk.Tk()
+        self._notif_after_id = None
+
         self.root.title("Ride Booking System")
         self.root.geometry("1100x700")
         self.root.configure(bg="#1a1200")
@@ -100,7 +102,12 @@ class MainWindow:
         self._refresh_notif_badge()
 
     def _refresh_notif_badge(self):
+        # Prevent Tkinter "invalid command name ... while executing (after script)"
+        # when the window is already being destroyed (e.g., during logout).
         try:
+            if not self.root.winfo_exists():
+                return
+
             import services.notification_service as ns
             count = ns.get_unread_count(self.account.username)
             if count > 0:
@@ -109,7 +116,10 @@ class MainWindow:
                 self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
         except Exception:
             pass
-        self.root.after(5000, self._refresh_notif_badge)
+
+        if self.root.winfo_exists():
+            self._notif_after_id = self.root.after(5000, self._refresh_notif_badge)
+
 
     def show_notifications(self):
         nf = os.path.join("data", "notifications.json")
@@ -193,14 +203,21 @@ class MainWindow:
     def logout(self):
         confirm = messagebox.askyesno("Logout", "Are you sure you want to logout?")
         if confirm:
+            # Cancel scheduled callbacks to avoid Tkinter "invalid command name".
+            try:
+                if self._notif_after_id is not None:
+                    self.root.after_cancel(self._notif_after_id)
+            except Exception:
+                pass
+
             self.root.destroy()
             from gui.login_window import LoginWindow
-            from gui.main_window import MainWindow
             login = LoginWindow()
             account = login.run()
             if account:
                 app = MainWindow(account)
                 app.run()
+
 
     def run(self):
         self.root.mainloop()

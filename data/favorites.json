@@ -1,3 +1,11 @@
 {
-  "gold": []
+  "gold": [
+    {
+      "name": "hi to hello",
+      "start": "hi",
+      "end": "hello",
+      "distance": 1.0,
+      "vehicle": "Bike"
+    }
+  ]
 }

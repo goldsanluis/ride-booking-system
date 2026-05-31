@@ -1,0 +1,9 @@
+{
+  "gold": [
+    {
+      "type": "gcash",
+      "label": "gold",
+      "default": false
+    }
+  ]
+}
