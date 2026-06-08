@@ -335,7 +335,8 @@ class BookingForm:
             side="left"
         )
 
-        import services.payment_service as ps
+        from services.payment_service import PaymentMethodService
+        ps = PaymentMethodService()
 
         methods = ps.get_methods(self.account.username)
         self.payment_var = tk.StringVar()
