@@ -11,17 +11,20 @@ github = "https://github.com/your-username/ride-booking-system"
 
 import json, os
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-PM_FILE  = os.path.join(DATA_DIR, "payment_methods.json")
-
-PAYMENT_ICONS = {
-    "wallet":   "💳",
-    "gcash":    "📱",
-    "maya":     "💜",
-    "card":     "💳",
-    "cash":     "💵",
+class PaymentMethodService:
+    PAYMENT_ICONS = {
+        "wallet":   "💳",
+        "gcash":    "📱",
+        "maya":     "💜",
+        "card":     "💳",
+        "cash":     "💵",
 }
-
+    def __init__(self, storage_path: str = None):
+            if storage_path is None:
+                base_dir = os.path.dirname(os.path.dirname(__file__))
+                self.storage_path = os.path.join(base_dir, "data", "payment_methods.json")
+            else:
+                self.storage_path = storage_path
 
 def _load() -> dict:
     if not os.path.exists(PM_FILE):
