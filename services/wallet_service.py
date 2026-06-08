@@ -19,7 +19,7 @@ class WalletService:
         self.account_manager = account_manager
         self.driver_manager = driver_manager
         
-    # --Private Helpers Methods--
+    # -----Private Helpers Methods-----
     def _find_account(self, username: str):
         # load all accounts and return account_dict and accounts list if found, else None
         accounts = self.account_manager.load_accounts()
@@ -45,52 +45,67 @@ class WalletService:
             return False, "Amount must be greater than zero!"
         return True, ""
     
-    # --Public Methods--
-    def deduct_passenger_wallet(self, username, amount):
-        """Deduct money from passenger wallet"""
-        accounts = self.account_manager.load_accounts()
-        for account in accounts:
-            if account["username"] == username:
-                if account["wallet_balance"] >= amount:
-                    account["wallet_balance"] -= amount
-                    self.account_manager.save_accounts(accounts)
-                    return True, f"Deducted ₱{amount:.2f}"
-                else:
-                    return False, "Insufficient balance!"
-        return False, "Account not found!"
+    # -----Public Methods-----
+    def deduct_passenger_wallet(self, username: str, amount: float) -> tuple:
+        # Deduct money from a passenger's wallet.
+        valid, err = self._validate_amount(amount)
+        if not valid:
+            return False, err
+        
+        account, accounts = self._find_account(username)
+        if account is None:
+            return False, "Account not found!"
+ 
+        balance = account.get("wallet_balance", self.DEFAULT_PASSENGER_BALANCE)
+        if balance < amount:
+            return False, f"Insufficient balance! You have ₱{balance:.2f}."
+ 
+        account["wallet_balance"] = round(balance - amount, 2)
+        self.account_manager.save_accounts(accounts)
+        return True, f"Deducted ₱{amount:.2f}. New balance: ₱{account['wallet_balance']:.2f}"
 
-    def add_driver_earnings(self, driver_id, amount):
-        """Add money to driver wallet"""
-        drivers = self.driver_manager.load_drivers()
-        for driver in drivers:
-            if driver["driver_id"] == driver_id:
-                driver["wallet_balance"] = driver.get("wallet_balance", 0.0) + amount
-                self.driver_manager.save_drivers(drivers)
-                return True, f"Earned ₱{amount:.2f}"
-        return False, "Driver not found!"
-
-    def get_passenger_balance(self, username):
-        """Get passenger wallet balance"""
-        accounts = self.account_manager.load_accounts()
-        for account in accounts:
-            if account["username"] == username:
-                return account.get("wallet_balance", 5000.0)
-        return 0.0
-
-    def get_driver_balance(self, driver_id):
-        """Get driver wallet balance"""
-        drivers = self.driver_manager.load_drivers()
-        for driver in drivers:
-            if driver["driver_id"] == driver_id:
-                return driver.get("wallet_balance", 0.0)
-        return 0.0
-
-    def add_passenger_balance(self, username, amount):
-        """Add money to passenger wallet (simulated top-up)"""
-        accounts = self.account_manager.load_accounts()
-        for account in accounts:
-            if account["username"] == username:
-                account["wallet_balance"] = account.get("wallet_balance", 5000.0) + amount
-                self.account_manager.save_accounts(accounts)
-                return True, f"Added ₱{amount:.2f}. New balance: ₱{account['wallet_balance']:.2f}"
-        return False, "Account not found!"
+    def add_passenger_balance(self, username: str, amount: float) -> tuple:
+        # Add money to a passenger's wallet (simulated top-up).
+        valid, err = self._validate_amount(amount)
+        if not valid:
+            return False, err
+ 
+        account, accounts = self._find_account(username)
+        if account is None:
+            return False, "Account not found!"
+ 
+        account["wallet_balance"] = round(
+            account.get("wallet_balance", self.DEFAULT_PASSENGER_BALANCE) + amount, 2
+        )
+        self.account_manager.save_accounts(accounts)
+        return True, f"Added ₱{amount:.2f}. New balance: ₱{account['wallet_balance']:.2f}"
+ 
+    def get_passenger_balance(self, username: str) -> float:
+        # Return a passenger's current wallet balance.
+        account, _ = self._find_account(username)
+        if account is None:
+            return 0.0
+        return account.get("wallet_balance", self.DEFAULT_PASSENGER_BALANCE)
+ 
+    def add_driver_earnings(self, driver_id: str, amount: float) -> tuple:
+        # Credit a driver's wallet with ride earnings.
+        valid, err = self._validate_amount(amount)
+        if not valid:
+            return False, err
+ 
+        driver, drivers = self._find_driver(driver_id)
+        if driver is None:
+            return False, "Driver not found!"
+ 
+        driver["wallet_balance"] = round(
+            driver.get("wallet_balance", self.DEFAULT_DRIVER_BALANCE) + amount, 2
+        )
+        self.driver_manager.save_drivers(drivers)
+        return True, f"Earned ₱{amount:.2f}. New balance: ₱{driver['wallet_balance']:.2f}"
+ 
+    def get_driver_balance(self, driver_id: str) -> float:
+        # Return a driver's current wallet balance.
+        driver, _ = self._find_driver(driver_id)
+        if driver is None:
+            return 0.0
+        return driver.get("wallet_balance", self.DEFAULT_DRIVER_BALANCE)
