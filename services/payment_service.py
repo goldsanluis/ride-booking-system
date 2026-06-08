@@ -49,7 +49,65 @@ class PaymentMethodService:
             methods.insert(0, {"type": "wallet", "label": "Ride Wallet", "default": True})
         return methods
     
-    #-----Public methods------
-    
+    #-----Public API------
+    def get_methods(self, username: str) -> list:
+        data = self._load()
+        methods = data.get(username, [])
+        return self._ensure_wallet(methods)
+
+    def add_method(self, username: str, mtype: str, label: str) -> tuple:
+        if mtype not in self.PAYMENT_ICONS:
+            return False, f"Invalid payment type. Allowed: {', '.join(self.PAYMENT_ICONS.keys())}"
+
+        data = self._load()
+        methods = self._ensure_wallet(data.get(username, []))
+
+        if any(m["type"] == mtype and m["label"] == label for m in methods):
+            return False, "This payment method already exists."
+
+        methods.append({"type": mtype, "label": label, "default": False})
+        data[username] = methods
+        self._save(data)
+        return True, f"{label} added successfully."
+
+    def remove_method(self, username: str, index: int) -> tuple:
+        data = self._load()
+        methods = self._ensure_wallet(data.get(username, []))
+
+        if index == 0 or methods[index].get("type") == "wallet":
+            return False, "Cannot remove the default Ride Wallet."
+            
+        if 0 <= index < len(methods):
+            removed = methods.pop(index)
+            # If the removed method was the default, fallback to wallet
+            if removed.get("default"):
+                methods[0]["default"] = True
+            
+            data[username] = methods
+            self._save(data)
+            return True, "Payment method removed."
+            
+        return False, "Invalid index."
+
+    def set_default(self, username: str, index: int) -> tuple:
+        data = self._load()
+        methods = self._ensure_wallet(data.get(username, []))
+
+        if not (0 <= index < len(methods)):
+            return False, "Invalid index."
+
+        for i, m in enumerate(methods):
+            m["default"] = (i == index)
+            
+        data[username] = methods
+        self._save(data)
+        return True, "Default payment method updated."
+
+    def get_default(self, username: str) -> dict:
+        methods = self.get_methods(username)
+        for m in methods:
+            if m.get("default"):
+                return m
+        return methods[0] # Fallback to wallet
 
    
