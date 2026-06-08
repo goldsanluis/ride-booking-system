@@ -14,12 +14,12 @@ class WalletService:
     DEFAULT_PASSENGER_BALANCE = 5000.0
     DEFAULT_DRIVER_BALANCE = 0.0
     
-    # --Constructor--
+    # -----Constructor-----
     def __init__(self, account_manager, driver_manager):
         self.account_manager = account_manager
         self.driver_manager = driver_manager
         
-    # -----Private Helpers Methods-----
+    # -----Protected Helpers Methods-----
     def _find_account(self, username: str):
         # load all accounts and return account_dict and accounts list if found, else None
         accounts = self.account_manager.load_accounts()
