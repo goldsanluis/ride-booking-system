@@ -25,72 +25,31 @@ class PaymentMethodService:
                 self.storage_path = os.path.join(base_dir, "data", "payment_methods.json")
             else:
                 self.storage_path = storage_path
+    
+    #-----Private helpers------
+    def _load(self) -> dict:
+        if not os.path.exists(self.storage_path):
+            return {}
+        try:
+            with open(self.storage_path, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            # File exists but is corrupted; return empty dict (or handle error)
+            return {}
 
-def _load() -> dict:
-    if not os.path.exists(PM_FILE):
-        return {}
-    try:
-        with open(PM_FILE) as f:
-            return json.load(f)
-    except Exception:
-        return {}
+    def _save(self, data: dict):
+        os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
+        with open(self.storage_path, "w") as f:
+            json.dump(data, f, indent=2)
 
+    def _ensure_wallet(self, methods: list) -> list:
+        """Ensures the wallet is always present at index 0."""
+        has_wallet = any(m["type"] == "wallet" for m in methods)
+        if not has_wallet:
+            methods.insert(0, {"type": "wallet", "label": "Ride Wallet", "default": True})
+        return methods
+    
+    #-----Public methods------
+    
 
-def _save(data: dict):
-    os.makedirs(DATA_DIR, exist_ok=True)
-    with open(PM_FILE, "w") as f:
-        json.dump(data, f, indent=2)
-
-
-def get_methods(username: str) -> list:
-    """Return list of payment method dicts for this user."""
-    data = _load()
-    methods = data.get(username, [])
-    # Wallet is always first and always present
-    wallet_entry = {"type": "wallet", "label": "Ride Wallet", "default": True}
-    has_wallet = any(m["type"] == "wallet" for m in methods)
-    if not has_wallet:
-        methods = [wallet_entry] + methods
-    return methods
-
-
-def add_method(username: str, mtype: str, label: str):
-    """Add a new payment method. Returns (ok, msg)."""
-    data = _load()
-    methods = data.get(username, [])
-    if any(m["type"] == mtype and m["label"] == label for m in methods):
-        return False, "This payment method already exists."
-    methods.append({"type": mtype, "label": label, "default": False})
-    data[username] = methods
-    _save(data)
-    return True, f"{label} added successfully."
-
-
-def remove_method(username: str, index: int):
-    """Remove a payment method by index (cannot remove wallet)."""
-    data = _load()
-    methods = data.get(username, [])
-    # Filter out wallet from indexing
-    non_wallet = [m for m in methods if m["type"] != "wallet"]
-    if 0 <= index < len(non_wallet):
-        non_wallet.pop(index)
-    data[username] = non_wallet
-    _save(data)
-
-
-def set_default(username: str, index: int):
-    """Set method at index as default."""
-    data  = _load()
-    methods = data.get(username, [])
-    for i, m in enumerate(methods):
-        m["default"] = (i == index)
-    data[username] = methods
-    _save(data)
-
-
-def get_default(username: str) -> dict:
-    """Return the default payment method dict."""
-    for m in get_methods(username):
-        if m.get("default"):
-            return m
-    return {"type": "wallet", "label": "Ride Wallet"}
+   
