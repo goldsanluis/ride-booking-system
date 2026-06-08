@@ -11,6 +11,9 @@ github = "https://github.com/your-username/ride-booking-system"
 
 class WalletService:
 
+    DEFAULT_PASSENGER_BALANCE = 5000.0
+    DEFAULT_DRIVER_BALANCE = 0.0
+    
     def __init__(self, account_manager, driver_manager):
         self.account_manager = account_manager
         self.driver_manager = driver_manager
