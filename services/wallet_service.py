@@ -14,10 +14,38 @@ class WalletService:
     DEFAULT_PASSENGER_BALANCE = 5000.0
     DEFAULT_DRIVER_BALANCE = 0.0
     
+    # --Constructor--
     def __init__(self, account_manager, driver_manager):
         self.account_manager = account_manager
         self.driver_manager = driver_manager
-
+        
+    # --Private Helpers Methods--
+    def _find_account(self, username: str):
+        # load all accounts and return account_dict and accounts list if found, else None
+        accounts = self.account_manager.load_accounts()
+        for account in accounts:
+            if accounts["username"] == username:
+                return account, accounts
+        return None, None
+    
+    def _find_driver(self, driver_id: str):
+        # load all drivers and return driver_dict and drivers list if found, else None
+        drivers = self.driver_manager.load_drivers()
+        for driver in drivers:
+            if driver["driver_id"] == driver_id:
+                return driver, drivers
+        return None, None
+    
+    @staticmethod
+    # Validate amount is a positive number
+    def _validate_amount(amount) -> tuple:
+        if not isinstance(amount, (int, float)):
+            return False, "Amount must be a number!"
+        if amount <= 0:
+            return False, "Amount must be greater than zero!"
+        return True, ""
+    
+    # --Public Methods--
     def deduct_passenger_wallet(self, username, amount):
         """Deduct money from passenger wallet"""
         accounts = self.account_manager.load_accounts()
