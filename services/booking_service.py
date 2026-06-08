@@ -25,6 +25,12 @@ class BookingService:
         next_id      (int): Next available booking ID.
     """
 
+    VEHICLE_CLASSES = {
+        "Car":  Car,
+        "Van":  Van,
+        "Bike": Bike,
+    }
+
     def __init__(self, file_manager):
         self.file_manager = file_manager
         self.bookings     = []
@@ -44,12 +50,8 @@ class BookingService:
         Returns:
             Vehicle | None: A new vehicle instance, or None for unknown types.
         """
-        vehicles = {
-            "Car":  Car(self.next_id),
-            "Van":  Van(self.next_id),
-            "Bike": Bike(self.next_id),
-        }
-        return vehicles.get(vehicle_type, None)
+        cls = self.VEHICLE_CLASSES.get(vehicle_type)
+        return cls(self.next_id) if cls else None
 
     # ── Persistence ───────────────────────────────────────────────────────────
 
@@ -61,16 +63,14 @@ class BookingService:
         """
         data = self.file_manager.load_bookings()
         for item in data:
-            # Skip hidden meta watermark record (stored as a special list element)
+            # Skip hidden meta watermark record
             if isinstance(item, dict) and item.get("_meta") is not None:
                 continue
 
             vehicle = self.get_vehicle(item["vehicle_type"])
-
             if not vehicle:
                 continue  # Skip corrupted / unknown vehicle records
 
-            # Reconstruct the Booking object from raw JSON fields
             booking = Booking(
                 item["booking_id"],
                 item["user"],
@@ -92,7 +92,6 @@ class BookingService:
             booking.surge      = item.get("surge",  1.0)
             booking.rating     = item.get("rating", None)
 
-            # Rebuild the driver object from the flattened JSON fields
             booking.driver = Driver(
                 item.get("driver_name",   "Unknown"),
                 item.get("driver_plate",  "Unknown"),
@@ -122,13 +121,16 @@ class BookingService:
             discount       (float):       Discount amount in ₱.
             scheduled_time (str | None):  Future ride datetime string.
 
+        Raises:
+            ValueError: If vehicle_type is not recognised.
+
         Returns:
-            Booking | str: The new Booking object, or an error string
-                           if an invalid vehicle type was provided.
+            Booking: The newly created Booking object.
         """
         vehicle = self.get_vehicle(vehicle_type)
         if not vehicle:
-            return "Invalid vehicle type!"
+            raise ValueError(f"Invalid vehicle type: '{vehicle_type}'. "
+                             f"Choose from: {', '.join(self.VEHICLE_CLASSES)}.")
 
         booking = Booking(
             self.next_id, user, vehicle,
@@ -141,7 +143,8 @@ class BookingService:
         )
 
         self.bookings.append(booking)
-        self.next_id += 1  # Increment so the next booking gets a unique ID
+        self.next_id += 1
+        self.save_bookings()  # Persist immediately so data survives a restart
         return booking
 
     def get_all_bookings(self):
@@ -160,20 +163,42 @@ class BookingService:
         """
         return [b for b in self.bookings if b.user == username]
 
+    def get_booking_count(self, username):
+        """
+        Return the total number of bookings for a passenger.
+
+        Args:
+            username (str): Passenger's username.
+
+        Returns:
+            int: Total booking count.
+        """
+        return len(self.get_user_bookings(username))
+
+    def get_total_spent(self, username):
+        """
+        Return the total amount spent on completed rides.
+
+        Args:
+            username (str): Passenger's username.
+
+        Returns:
+            float: Sum of total_cost for all completed bookings.
+        """
+        return sum(
+            b.total_cost for b in self.get_user_bookings(username)
+            if b.status == "Completed"
+        )
+
     def cancel_booking(self, booking_id, username, refund_policy=100):
         """
         Cancel a booking and return the fare as a refund amount.
         Only the passenger who made the booking can cancel it.
 
-        Notes:
-            This service does NOT update the wallet balance. It only computes
-            and returns the refund amount that the caller (GUI) may apply.
-
         Args:
-            booking_id (int): ID of the booking to cancel.
-            username   (str): Username of the requesting passenger.
+            booking_id    (int):   ID of the booking to cancel.
+            username      (str):   Username of the requesting passenger.
             refund_policy (float): Percentage of booking.total_cost to refund.
-                                     Defaults to 100.
 
         Returns:
             tuple[str, float]: (message, refund_amount).
@@ -191,10 +216,10 @@ class BookingService:
 
                 refund = booking.total_cost * refund_pct / 100.0
                 booking.cancel()
+                self.save_bookings()
                 return (f"Booking #{booking_id} cancelled. "
                         f"₱{refund:.2f} refund computed ({refund_pct:.0f}%)."), refund
         return "Booking not found!", 0.0
-
 
     def complete_booking(self, booking_id, username):
         """
@@ -212,6 +237,7 @@ class BookingService:
                 if booking.user != username:
                     return "You can only complete your own bookings!"
                 booking.complete()
+                self.save_bookings()
                 return f"Booking #{booking_id} completed!"
         return "Booking not found!"
 
@@ -223,7 +249,7 @@ class BookingService:
         Args:
             booking_id (int): ID of the booking to rate.
             username   (str): Must match the booking's owner.
-            rating     (int): Star rating 1–5.
+            rating     (int): Star rating 1-5.
 
         Returns:
             str: Success or error message.
@@ -234,7 +260,9 @@ class BookingService:
                     return "You can only rate your own bookings!"
                 if booking.status != "Completed":
                     return "You can only rate completed bookings!"
-                return booking.add_rating(rating)
+                result = booking.add_rating(rating)
+                self.save_bookings()
+                return result
         return "Booking not found!"
 
     def get_active_bookings(self):
@@ -254,11 +282,9 @@ class BookingService:
             return "You can only activate your own bookings."
         if booking.status != "Scheduled":
             return f"Booking is not Scheduled (current status: {booking.status})."
-
         booking.activate()
         self.save_bookings()
         return f"Booking #{booking_id} is now Active!"
-
 
     def find_booking_by_id(self, booking_id):
         """
@@ -314,7 +340,6 @@ class BookingService:
 
         total_spent = sum(b.total_cost for b in completed)
 
-        # Break down spending by vehicle type
         by_vehicle = {}
         for b in completed:
             vname = b.vehicle.name

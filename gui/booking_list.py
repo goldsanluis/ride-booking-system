@@ -467,9 +467,122 @@ class BookingList:
             pass  # user can manually complete after tracking
         TrackingWindow(self.frame, booking, on_complete_callback=on_done)
 
+    def _show_receipt(self, booking):
+        """Show a formatted receipt popup for a completed booking."""
+        surge_txt  = f"\n🚀 Surge x{booking.surge} applied" if booking.surge > 1.0 else ""
+        promo_txt  = f"\n🎟️ Promo {booking.promo_code}: -₱{booking.discount:.2f}" if getattr(booking, 'promo_code', None) else ""
+        rating_txt = f"{'⭐' * booking.rating}" if booking.rating else "Not rated"
+        pax_txt    = f"\n👥 Passengers: {getattr(booking, 'passengers', 1)}"
+        notes_txt  = f"\n📝 Notes: {booking.notes}" if getattr(booking, 'notes', '') else ""
+
+        receipt = (
+            f"{'='*36}\n"
+            f"       RIDE RECEIPT\n"
+            f"{'='*36}\n"
+            f"Booking ID : #{booking.booking_id}\n"
+            f"Date       : {booking.date}\n"
+            f"{'─'*36}\n"
+            f"From       : {booking.start_location}\n"
+            f"To         : {booking.end_location}\n"
+            f"Distance   : {booking.distance} km\n"
+            f"Vehicle    : {booking.vehicle.name}{pax_txt}\n"
+            f"Driver     : {booking.driver.name}\n"
+            f"{'─'*36}\n"
+            f"Fare       : ₱{booking.total_cost:.2f}"
+            f"{surge_txt}{promo_txt}{notes_txt}\n"
+            f"Status     : {booking.status}\n"
+            f"Rating     : {rating_txt}\n"
+            f"{'='*36}"
+        )
+        messagebox.showinfo(f"Receipt — Booking #{booking.booking_id}", receipt)
+
     def _save(self):
         self.service.save_bookings()
 
+    # ════════════════════════════════════════════════════════════════════════
+    #  STATS TAB
+    # ════════════════════════════════════════════════════════════════════════
+    def _show_stats_tab(self):
+        self._active_tab = "stats"
+        self._set_tab_styles("stats")
+        self._clear_content()
+        self._build_stats_ui()
 
-    # (rest of file unchanged)
+    def _build_stats_ui(self):
+        stats = self.service.get_user_stats(self.account.username)
 
+        canvas    = tk.Canvas(self.content_frame, bg=BG_DARK, highlightthickness=0)
+        scrollbar = tk.Scrollbar(self.content_frame, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        inner = tk.Frame(canvas, bg=BG_DARK)
+        win   = canvas.create_window((0, 0), window=inner, anchor="nw")
+        inner.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfig(win, width=e.width))
+
+        tk.Label(inner, text="📊 My Ride Statistics",
+                 font=("Helvetica", 15, "bold"), bg=BG_DARK, fg=GOLD).pack(pady=(16, 8))
+
+        # ── Summary cards ─────────────────────────────────────────────────────
+        cards_frame = tk.Frame(inner, bg=BG_DARK)
+        cards_frame.pack(fill="x", padx=12, pady=4)
+
+        card_data = [
+            ("Total Bookings", stats["total_bookings"], GOLD,       "🗂️"),
+            ("Completed",      stats["completed"],      GREEN,      "✅"),
+            ("Cancelled",      stats["cancelled"],      RED,        "❌"),
+            ("Active / Sched", stats["active"],         GOLD_ACCENT,"🚗"),
+        ]
+        for col, (label, value, color, icon) in enumerate(card_data):
+            cf = tk.Frame(cards_frame, bg=BG_CARD, padx=14, pady=10)
+            cf.grid(row=0, column=col, padx=6, pady=4, sticky="nsew")
+            cards_frame.columnconfigure(col, weight=1)
+            tk.Label(cf, text=icon, font=("Helvetica", 18), bg=BG_CARD, fg=color).pack()
+            tk.Label(cf, text=str(value), font=("Helvetica", 22, "bold"), bg=BG_CARD, fg=color).pack()
+            tk.Label(cf, text=label, font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY).pack()
+
+        # ── Spending summary ──────────────────────────────────────────────────
+        spend_frame = tk.Frame(inner, bg=BG_CARD, padx=16, pady=12)
+        spend_frame.pack(fill="x", padx=12, pady=8)
+        tk.Label(spend_frame, text="💰 Spending Summary",
+                 font=("Helvetica", 12, "bold"), bg=BG_CARD, fg=GOLD).pack(anchor="w", pady=(0, 6))
+
+        avg_rating = stats.get("avg_rating_given")
+        rating_txt = f"{'⭐' * round(avg_rating)} ({avg_rating:.1f})" if avg_rating else "N/A"
+
+        rows = [
+            ("Total Spent",       f"₱{stats['total_spent']:.2f}"),
+            ("Average Fare",      f"₱{stats['avg_fare']:.2f}"),
+            ("Total Distance",    f"{stats['total_distance']:.1f} km"),
+            ("Avg Rating Given",  rating_txt),
+        ]
+        for label, value in rows:
+            row = tk.Frame(spend_frame, bg=BG_CARD)
+            row.pack(fill="x", pady=2)
+            tk.Label(row, text=label, font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_GRAY).pack(side="left")
+            tk.Label(row, text=value, font=("Helvetica", 10, "bold"), bg=BG_CARD, fg=TEXT_WHITE).pack(side="right")
+
+        # ── By vehicle breakdown ──────────────────────────────────────────────
+        by_v = stats.get("by_vehicle", {})
+        if by_v:
+            veh_frame = tk.Frame(inner, bg=BG_CARD, padx=16, pady=12)
+            veh_frame.pack(fill="x", padx=12, pady=4)
+            tk.Label(veh_frame, text="🚗 Spending by Vehicle",
+                     font=("Helvetica", 12, "bold"), bg=BG_CARD, fg=GOLD).pack(anchor="w", pady=(0, 6))
+            total_v = sum(by_v.values()) or 1
+            vehicle_colors = {"Car": GOLD_ACCENT, "Van": TEAL, "Bike": GREEN}
+            for vname, amount in by_v.items():
+                pct = amount / total_v * 100
+                row = tk.Frame(veh_frame, bg=BG_CARD)
+                row.pack(fill="x", pady=3)
+                color = vehicle_colors.get(vname, TEXT_WHITE)
+                tk.Label(row, text=vname, font=("Helvetica", 10), bg=BG_CARD, fg=color, width=6, anchor="w").pack(side="left")
+                bar_bg = tk.Frame(row, bg="#3d2a00", height=14, width=200)
+                bar_bg.pack(side="left", padx=8)
+                bar_bg.pack_propagate(False)
+                fill_w = max(4, int(pct / 100 * 200))
+                tk.Frame(bar_bg, bg=color, height=14, width=fill_w).place(x=0, y=0)
+                tk.Label(row, text=f"₱{amount:.2f} ({pct:.0f}%)",
+                         font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY).pack(side="left")
