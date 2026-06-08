@@ -12,67 +12,69 @@ github = "https://github.com/your-username/ride-booking-system"
 """
 
 
-
 class Account:
-    """
-    A passenger account with login credentials and an in-app wallet.
+    """A passenger account with login credentials and an in-app wallet."""
 
-    Attributes:
-        user_id        (int):   Unique numeric ID assigned at registration.
-        username       (str):   Login username (must be unique).
-        password       (str):   Plain-text password (stored as-is for simplicity).
-        name           (str):   Passenger's display name.
-        wallet_balance (float): Current in-app wallet balance in ₱.
-    """
+    STARTING_BALANCE = 5000.0
 
-    def __init__(self, user_id, username, password, name, wallet_balance=5000.0):
-        self.user_id        = user_id
-        self.username       = username
-        self.password       = password
-        self.name           = name
-        self.wallet_balance = wallet_balance  # New accounts start with ₱5,000
+    def __init__(self, user_id, username, password, name, wallet_balance=None):
+        self.user_id = user_id
+        self.username = username
+        self.password = password
+        self.name = name
+
+        if wallet_balance is None:
+            wallet_balance = self.STARTING_BALANCE
+
+        # Ensure numeric type safety even when wallet is loaded from JSON.
+        self.wallet_balance = float(wallet_balance)
 
     def check_password(self, password):
-        """
-        Verify whether the supplied password matches this account's password.
-
-        Args:
-            password (str): Password to check.
-
-        Returns:
-            bool: True if passwords match, False otherwise.
-        """
+        """Verify whether the supplied password matches this account's password."""
         return self.password == password
 
     def add_money(self, amount):
-        """
-        Top up the wallet by the given amount.
+        """Top up the wallet by the given amount.
 
-        Args:
-            amount (float): Amount in ₱ to add.
-
-        Returns:
-            str: Confirmation message with the new balance.
+        Raises:
+            ValueError: If amount <= 0
         """
+        amount = float(amount)
+        if amount <= 0:
+            raise ValueError("amount must be > 0")
+
         self.wallet_balance += amount
         return f"Added ₱{amount:.2f}. New balance: ₱{self.wallet_balance:.2f}"
 
     def deduct_money(self, amount):
-        """
-        Deduct a fare payment from the wallet, if funds are sufficient.
+        """Deduct a fare payment from the wallet, if funds are sufficient.
 
-        Args:
-            amount (float): Amount in ₱ to deduct.
-
-        Returns:
-            bool: True if the deduction succeeded, False if balance is too low.
+        Raises:
+            ValueError: If amount <= 0
         """
+        amount = float(amount)
+        if amount <= 0:
+            raise ValueError("amount must be > 0")
+
         if self.wallet_balance >= amount:
             self.wallet_balance -= amount
             return True
         return False  # Insufficient funds
 
+    def get_balance(self):
+        """Return the wallet balance rounded to 2 decimals."""
+        return round(self.wallet_balance, 2)
+
     def __str__(self):
-        return (f"[Account] {self.username} "
-                f"({self.name}) - "
-                f"Balance: ₱{self.wallet_balance:.2f}")
+        return (
+            f"[Account] {self.username} "
+            f"({self.name}) - "
+            f"Balance: ₱{self.wallet_balance:.2f}"
+        )
+
+    def __repr__(self):
+        return (
+            f"Account(user_id={self.user_id!r}, username={self.username!r}, "
+            f"name={self.name!r}, wallet_balance={self.wallet_balance!r})"
+        )
+

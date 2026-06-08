@@ -160,14 +160,20 @@ class BookingService:
         """
         return [b for b in self.bookings if b.user == username]
 
-    def cancel_booking(self, booking_id, username):
+    def cancel_booking(self, booking_id, username, refund_policy=100):
         """
         Cancel a booking and return the fare as a refund amount.
         Only the passenger who made the booking can cancel it.
 
+        Notes:
+            This service does NOT update the wallet balance. It only computes
+            and returns the refund amount that the caller (GUI) may apply.
+
         Args:
             booking_id (int): ID of the booking to cancel.
             username   (str): Username of the requesting passenger.
+            refund_policy (float): Percentage of booking.total_cost to refund.
+                                     Defaults to 100.
 
         Returns:
             tuple[str, float]: (message, refund_amount).
@@ -177,11 +183,18 @@ class BookingService:
             if booking.booking_id == booking_id:
                 if booking.user != username:
                     return "You can only cancel your own bookings!", 0.0
-                refund = booking.total_cost
+
+                try:
+                    refund_pct = float(refund_policy)
+                except (TypeError, ValueError):
+                    refund_pct = 100.0
+
+                refund = booking.total_cost * refund_pct / 100.0
                 booking.cancel()
                 return (f"Booking #{booking_id} cancelled. "
-                        f"₱{refund:.2f} refunded to your wallet!"), refund
+                        f"₱{refund:.2f} refund computed ({refund_pct:.0f}%)."), refund
         return "Booking not found!", 0.0
+
 
     def complete_booking(self, booking_id, username):
         """
@@ -227,6 +240,25 @@ class BookingService:
     def get_active_bookings(self):
         """Return all bookings currently in 'Active' status."""
         return [b for b in self.bookings if b.status == "Active"]
+
+    def save_bookings(self):
+        """Persist all in-memory bookings via the underlying FileManager."""
+        self.file_manager.save_bookings(self.bookings)
+
+    def activate_booking(self, booking_id, username):
+        """Activate a scheduled booking for a specific user."""
+        booking = self.find_booking_by_id(booking_id)
+        if not booking:
+            return "Booking not found."
+        if booking.user != username:
+            return "You can only activate your own bookings."
+        if booking.status != "Scheduled":
+            return f"Booking is not Scheduled (current status: {booking.status})."
+
+        booking.activate()
+        self.save_bookings()
+        return f"Booking #{booking_id} is now Active!"
+
 
     def find_booking_by_id(self, booking_id):
         """

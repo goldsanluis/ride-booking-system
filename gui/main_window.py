@@ -36,6 +36,11 @@ class MainWindow:
         self.setup_header()
         self.setup_tabs()
 
+        self.root.protocol("WM_DELETE_WINDOW", self.logout)
+
+
+
+
     def setup_header(self):
         header = tk.Frame(self.root, bg="#2d1f00", pady=10)
         header.pack(fill="x")
@@ -102,7 +107,18 @@ class MainWindow:
             command=self._open_payment_methods
         ).pack(side="right", padx=5)
 
-
+        tk.Button(
+            title_frame,
+            text="ℹ️ About",
+            font=("Helvetica", 10, "bold"),
+            bg="#2d1f00",
+            fg="#FFD700",
+            relief="flat",
+            padx=10,
+            pady=5,
+            cursor="hand2",
+            command=self._open_about
+        ).pack(side="right", padx=5)
 
 
 
@@ -110,6 +126,7 @@ class MainWindow:
 
 
         tk.Label(
+
 
             header,
             text=f"Welcome, {self.account.name}! 👑",
@@ -147,18 +164,20 @@ class MainWindow:
             return
         with open(nf) as f:
             notifs = json.load(f)
-        mine = [n for n in notifs if n.get("user") == self.account.name]
+        mine = [n for n in notifs if n.get("user") == self.account.username]
         if not mine:
             messagebox.showinfo("Notifications", "No notifications for you yet.")
             return
+
         unread = [n for n in mine if not n.get("seen")]
         msg = ""
         for n in mine[-5:][::-1]:
             status = "[NEW] " if not n.get("seen") else ""
             msg += status + n.get("message", "No message") + "\n\n"
         for n in notifs:
-            if n.get("user") == self.account.name:
+            if n.get("user") == self.account.username:
                 n["seen"] = True
+
         with open(nf, "w") as f:
             json.dump(notifs, f, indent=2)
         self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")

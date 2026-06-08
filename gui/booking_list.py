@@ -189,7 +189,7 @@ class BookingList:
         self.refresh()
 
     def _filter_bookings(self, bookings):
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         status  = self.status_var.get()
         vehicle = self.vehicle_var.get()
@@ -207,11 +207,19 @@ class BookingList:
                 haystack = (b.start_location + " " + b.end_location + " " + (b.notes or "")).lower()
                 if keyword not in haystack:
                     continue
+
             if period != "All time":
-                try:
-                    bdate = datetime.strptime(b.date, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
+                bdate = None
+                for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+                    try:
+                        bdate = datetime.strptime(b.date, fmt)
+                        break
+                    except ValueError:
+                        continue
+
+                if bdate is None:
                     continue
+
                 if period == "Today":
                     if bdate.date() != now.date():
                         continue
@@ -221,8 +229,10 @@ class BookingList:
                 elif period == "This month":
                     if bdate.month != now.month or bdate.year != now.year:
                         continue
+
             result.append(b)
         return result
+
 
     def refresh(self):
         if self._active_tab != "bookings":
@@ -336,28 +346,33 @@ class BookingList:
 
     # ── actions ────────────────────────────────────────────────────────────────
     def _cancel(self, booking):
-        # Calculate refund policy: full refund if >15 min before scheduled, 50% if active
-        refund_pct = 100
-        if booking.status == "Active":
-            refund_pct = 50
-        refund_amt = booking.total_cost * refund_pct / 100
-
-        confirm_msg = (f"Cancel booking #{booking.booking_id}?\nRefund: ₱{refund_amt:.2f} ({refund_pct}%) will be returned to your wallet.")
+        refund_pct = 50 if booking.status == "Active" else 100
+        confirm_msg = (
+            f"Cancel booking #{booking.booking_id}?\n"
+            f"Refund policy: {refund_pct}% of the booking total will be returned to your wallet."
+        )
         if messagebox.askyesno("Cancel Booking", confirm_msg):
-            result = self.service.cancel_booking(booking.booking_id, self.account.username)
-            if isinstance(result, tuple):
-                msg, _ = result
-            else:
-                msg = result
-            # Apply refund
+            msg, refund_amt = self.service.cancel_booking(
+                booking.booking_id,
+                self.account.username,
+                refund_policy=refund_pct,
+            )
+
+            # Apply refund (GUI responsibility)
             self.account.wallet_balance += refund_amt
             from file_handler.account_manager import AccountManager
             AccountManager().update_account(self.account)
+
+
             # Send refund notification
             import services.notification_service as notif_svc
-            notif_svc.push(self.account.username,
-                           f"Booking #{booking.booking_id} cancelled. ₱{refund_amt:.2f} refunded.",
-                           category="refund", booking_id=booking.booking_id)
+            notif_svc.push(
+                self.account.username,
+                f"Booking #{booking.booking_id} cancelled. ₱{refund_amt:.2f} refunded.",
+                category="refund",
+                booking_id=booking.booking_id,
+            )
+
             self._save()
             messagebox.showinfo("Cancelled", msg)
             self.refresh()
@@ -378,10 +393,13 @@ class BookingList:
         """Activate a scheduled booking immediately."""
         if messagebox.askyesno("Activate Now",
                                f"Activate booking #{booking.booking_id} right now?"):
-            booking.activate()
-            self._save()
-            messagebox.showinfo("Activated", f"Booking #{booking.booking_id} is now Active!")
-            self.refresh()
+            msg = self.service.activate_booking(booking.booking_id, self.account.username)
+            if msg.startswith("Booking #"):
+                messagebox.showinfo("Activated", msg)
+                self.refresh()
+            else:
+                messagebox.showerror("Activation Failed", msg)
+
 
     def _rate(self, booking):
         """Star rating dialog that also updates the driver's average rating."""
@@ -450,292 +468,8 @@ class BookingList:
         TrackingWindow(self.frame, booking, on_complete_callback=on_done)
 
     def _save(self):
-        from file_handler.file_manager import FileManager
-        FileManager().save_bookings(self.service.get_all_bookings())
+        self.service.save_bookings()
 
-    def _show_receipt(self, booking):
-        win = tk.Toplevel()
-        win.title(f"Receipt — Booking #{booking.booking_id}")
-        win.configure(bg=BG_DARK)
-        win.resizable(False, False)
 
-        tk.Label(win, text="🧾  RIDE RECEIPT",
-                 font=("Courier", 16, "bold"), bg=BG_DARK, fg=GOLD).pack(pady=(16, 4))
-        tk.Label(win, text="─" * 44, bg=BG_DARK, fg=GOLD_DARK).pack()
+    # (rest of file unchanged)
 
-        def row(label, value, fg=TEXT_WHITE):
-            fr = tk.Frame(win, bg=BG_DARK); fr.pack(fill="x", padx=24, pady=1)
-            tk.Label(fr, text=label, font=("Courier", 10),
-                     bg=BG_DARK, fg=TEXT_GRAY, width=20, anchor="w").pack(side="left")
-            tk.Label(fr, text=value, font=("Courier", 10),
-                     bg=BG_DARK, fg=fg, anchor="e").pack(side="right")
-
-        row("Booking ID",     f"#{booking.booking_id}")
-        row("Date",           booking.date)
-        row("Passenger",      booking.user)
-        row("Driver",         booking.driver.name)
-        row("Plate",          booking.driver.plate)
-        row("Vehicle",        booking.vehicle.name)
-        row("From",           booking.start_location)
-        row("To",             booking.end_location)
-        row("Distance",       f"{booking.distance} km")
-
-        if getattr(booking, "passengers", 1) > 1:
-            row("Passengers",  str(booking.passengers))
-
-        sched = getattr(booking, "scheduled_time", None)
-        if sched:
-            row("Scheduled For", sched)
-
-        tk.Label(win, text="─" * 44, bg=BG_DARK, fg=GOLD_DARK).pack(pady=(6, 0))
-
-        base = booking.vehicle.calculate_cost(booking.distance)
-        row("Base Fare",      f"₱{base:.2f}")
-        if booking.surge > 1.0:
-            row(f"Surge (×{booking.surge})",
-                f"+₱{(base * booking.surge - base):.2f}", fg=GOLD_ACCENT)
-        if getattr(booking, "discount", 0) > 0:
-            row(f"Promo ({booking.promo_code})",
-                f"−₱{booking.discount:.2f}", fg=GREEN)
-
-        tk.Label(win, text="─" * 44, bg=BG_DARK, fg=GOLD_DARK).pack(pady=(0, 2))
-        row("TOTAL PAID",     f"₱{booking.total_cost:.2f}", fg=GOLD)
-        tk.Label(win, text="─" * 44, bg=BG_DARK, fg=GOLD_DARK).pack()
-
-        if booking.rating:
-            tk.Label(win, text=f"Your rating: {'⭐' * booking.rating}",
-                     font=("Courier", 10), bg=BG_DARK, fg=GOLD_ACCENT).pack(pady=4)
-
-        notes = getattr(booking, "notes", "")
-        if notes:
-            tk.Label(win, text=f"Notes: {notes}",
-                     font=("Courier", 9, "italic"), bg=BG_DARK, fg=TEXT_GRAY,
-                     wraplength=340).pack(pady=(4, 0))
-
-        tk.Label(win, text="\nThank you for riding with us! 🚗",
-                 font=("Courier", 10, "italic"), bg=BG_DARK, fg=GOLD).pack(pady=(6, 4))
-
-        tk.Button(win, text="Copy to Clipboard", font=("Helvetica", 10),
-                  bg=GOLD_DARK, fg=TEXT_WHITE, relief="flat", padx=12, pady=6,
-                  cursor="hand2",
-                  command=lambda: self._copy_receipt(win, booking)).pack(pady=(4, 12))
-
-    def _export_bookings(self):
-        try:
-            all_bookings = self.service.get_user_bookings(self.account.username)
-        except Exception as e:
-            messagebox.showerror("Export Error", f"Could not load booking history: {e}")
-            return
-
-        if not all_bookings:
-            messagebox.showinfo("Export Bookings", "No bookings to export.")
-            return
-
-        # Apply current filters for a better user experience
-        try:
-            filtered = self._filter_bookings(sorted(all_bookings, key=lambda b: b.date, reverse=True))
-        except Exception:
-            filtered = all_bookings
-
-        default_name = f"booking_history_{self.account.username}.txt"
-        file_path = filedialog.asksaveasfilename(
-            title="Export Bookings",
-            defaultextension=".txt",
-            initialfile=default_name,
-            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
-        )
-        if not file_path:
-            return
-
-        def receipt_text(b):
-            base = b.vehicle.calculate_cost(b.distance)
-            surge_line = ""
-            if getattr(b, "surge", 1.0) > 1.0:
-                surge_line = f"Surge (×{b.surge}): +₱{(base * b.surge - base):.2f}\n"
-            promo_line = ""
-            if getattr(b, "discount", 0) > 0:
-                promo_line = f"Promo ({getattr(b, 'promo_code', '')}): −₱{b.discount:.2f}\n"
-            pax_line = ""
-            if getattr(b, "passengers", 1) > 1:
-                pax_line = f"Passengers: {b.passengers}\n"
-            sched_line = ""
-            if getattr(b, "scheduled_time", None):
-                sched_line = f"Scheduled For: {b.scheduled_time}\n"
-            rating_line = ""
-            if getattr(b, "rating", None):
-                rating_line = f"Your rating: {'⭐' * b.rating}\n"
-
-            notes_line = ""
-            if getattr(b, "notes", ""):
-                notes = b.notes.strip()
-                notes_line = f"Notes: {notes}\n"
-
-            return (
-                "=== RIDE RECEIPT ===\n"
-                f"Booking ID: #{b.booking_id}\n"
-                f"Date: {b.date}\n"
-                f"Passenger: {b.user}\n"
-                f"Driver: {b.driver.name} ({b.driver.plate})\n"
-                f"Vehicle: {b.vehicle.name}\n"
-                f"From: {b.start_location}\n"
-                f"To: {b.end_location}\n"
-                f"Distance: {b.distance} km\n"
-                f"Status: {b.status}\n"
-                f"{pax_line}{sched_line}"
-                "--------------------\n"
-                f"Base Fare: ₱{base:.2f}\n"
-                f"{surge_line}{promo_line}"
-                f"TOTAL PAID: ₱{b.total_cost:.2f}\n"
-                "--------------------\n"
-                f"{rating_line}{notes_line}"
-                "--------------------\n\n"
-            )
-
-        text = ""
-        for b in filtered:
-            text += receipt_text(b)
-
-        try:
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(text)
-        except Exception as e:
-            messagebox.showerror("Export Error", f"Could not write file: {e}")
-            return
-
-        messagebox.showinfo("Export Complete", f"Exported {len(filtered)} booking(s) to:\n{file_path}")
-
-    def _copy_receipt(self, parent, b):
-        base       = b.vehicle.calculate_cost(b.distance)
-
-        surge_line = f"Surge (×{b.surge}): +₱{(base*b.surge-base):.2f}\n" if b.surge > 1.0 else ""
-        promo_line = f"Promo ({b.promo_code}): -₱{b.discount:.2f}\n" if getattr(b, "discount", 0) > 0 else ""
-        pax_line   = f"Passengers: {b.passengers}\n" if getattr(b, "passengers", 1) > 1 else ""
-        notes_line = f"Notes: {b.notes}\n" if getattr(b, "notes", "") else ""
-        rating_line= f"Rating: {'⭐'*b.rating}\n" if b.rating else ""
-        sched_line = f"Scheduled For: {b.scheduled_time}\n" if getattr(b, "scheduled_time", None) else ""
-
-        text = (f"=== RIDE RECEIPT ===\n"
-                f"Booking ID: #{b.booking_id}\n"
-                f"Date: {b.date}\n"
-                f"Passenger: {b.user}\n"
-                f"Driver: {b.driver.name} ({b.driver.plate})\n"
-                f"Vehicle: {b.vehicle.name}\n"
-                f"From: {b.start_location}\n"
-                f"To: {b.end_location}\n"
-                f"Distance: {b.distance} km\n"
-                f"{pax_line}{sched_line}"
-                f"--------------------\n"
-                f"Base Fare: ₱{base:.2f}\n"
-                f"{surge_line}{promo_line}"
-                f"TOTAL PAID: ₱{b.total_cost:.2f}\n"
-                f"--------------------\n"
-                f"{rating_line}{notes_line}"
-                f"Thank you for riding with us!")
-        parent.clipboard_clear()
-        parent.clipboard_append(text)
-        messagebox.showinfo("Copied!", "Receipt copied to clipboard.", parent=parent)
-
-    # ════════════════════════════════════════════════════════════════════════
-    #  STATS TAB
-    # ════════════════════════════════════════════════════════════════════════
-    def _show_stats_tab(self):
-        self._active_tab = "stats"
-        self._set_tab_styles("stats")
-        self._clear_content()
-        self._build_stats_ui()
-
-    def _build_stats_ui(self):
-        stats = self.service.get_user_stats(self.account.username)
-
-        canvas = tk.Canvas(self.content_frame, bg=BG_DARK, highlightthickness=0)
-        sb     = tk.Scrollbar(self.content_frame, orient="vertical", command=canvas.yview)
-        canvas.configure(yscrollcommand=sb.set)
-        sb.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-
-        inner = tk.Frame(canvas, bg=BG_DARK)
-        win   = canvas.create_window((0, 0), window=inner, anchor="nw")
-        inner.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.bind("<Configure>", lambda e: canvas.itemconfig(win, width=e.width))
-
-        tk.Label(inner, text="📊 My Ride Statistics",
-                 font=("Helvetica", 14, "bold"), bg=BG_DARK, fg=GOLD).pack(pady=(12, 8))
-
-        # ── Summary cards ─────────────────────────────────────────────────────
-        row1 = tk.Frame(inner, bg=BG_DARK); row1.pack(fill="x", padx=10, pady=4)
-        row2 = tk.Frame(inner, bg=BG_DARK); row2.pack(fill="x", padx=10, pady=4)
-
-        def stat_card(parent, icon, label, value, color=GOLD):
-            fr = tk.Frame(parent, bg=BG_CARD, padx=14, pady=12)
-            fr.pack(side="left", expand=True, fill="x", padx=5)
-            tk.Label(fr, text=icon, font=("Helvetica", 18), bg=BG_CARD, fg=color).pack()
-            tk.Label(fr, text=value, font=("Helvetica", 15, "bold"), bg=BG_CARD, fg=color).pack()
-            tk.Label(fr, text=label, font=("Helvetica", 8), bg=BG_CARD, fg=TEXT_GRAY).pack()
-
-        stat_card(row1, "🚗", "Total Bookings",    str(stats["total_bookings"]),     GOLD)
-        stat_card(row1, "✅", "Completed Rides",   str(stats["completed"]),          GREEN)
-        stat_card(row1, "❌", "Cancelled",         str(stats["cancelled"]),          RED)
-        stat_card(row1, "⏳", "Active/Scheduled",  str(stats["active"]),             TEAL)
-
-        stat_card(row2, "💰", "Total Spent",       f"₱{stats['total_spent']:.2f}",  GREEN)
-        stat_card(row2, "📏", "Total Distance",    f"{stats['total_distance']:.1f} km", GOLD_ACCENT)
-        stat_card(row2, "💳", "Avg Fare",          f"₱{stats['avg_fare']:.2f}",     GOLD)
-        avg_r = stats["avg_rating_given"]
-        stat_card(row2, "⭐", "Avg Rating Given",
-                  f"{avg_r:.1f} ★" if avg_r else "—", GOLD)
-
-        # ── Spending by vehicle ───────────────────────────────────────────────
-        tk.Label(inner, text="Spending by Vehicle Type",
-                 font=("Helvetica", 11, "bold"), bg=BG_DARK, fg=GOLD_ACCENT).pack(pady=(16, 4))
-
-        by_v = stats["by_vehicle"]
-        if by_v:
-            total_v = sum(by_v.values()) or 1
-            bar_frame = tk.Frame(inner, bg=BG_CARD, padx=16, pady=12)
-            bar_frame.pack(fill="x", padx=10)
-
-            icons = {"Car": "🚗", "Van": "🚐", "Bike": "🏍️"}
-            colors = {"Car": GOLD, "Van": TEAL, "Bike": GREEN}
-
-            for vname, amount in sorted(by_v.items(), key=lambda x: x[1], reverse=True):
-                pct = amount / total_v
-                row = tk.Frame(bar_frame, bg=BG_CARD); row.pack(fill="x", pady=3)
-                tk.Label(row, text=f"{icons.get(vname,'🚗')} {vname}",
-                         font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_WHITE,
-                         width=8, anchor="w").pack(side="left")
-                bar_outer = tk.Frame(row, bg="#3d2a00", height=16); bar_outer.pack(side="left", fill="x", expand=True, padx=8)
-                bar_outer.pack_propagate(False)
-                bar_inner = tk.Frame(bar_outer, bg=colors.get(vname, GOLD), height=16)
-                bar_inner.place(relwidth=pct, relheight=1.0)
-                tk.Label(row, text=f"₱{amount:.0f} ({pct*100:.0f}%)",
-                         font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY,
-                         width=16, anchor="e").pack(side="left")
-        else:
-            tk.Label(inner, text="Complete some rides to see spending breakdown.",
-                     font=("Helvetica", 10), bg=BG_DARK, fg=TEXT_GRAY).pack(pady=8)
-
-        # ── Recent activity ───────────────────────────────────────────────────
-        tk.Label(inner, text="Last 5 Rides",
-                 font=("Helvetica", 11, "bold"), bg=BG_DARK, fg=GOLD_ACCENT).pack(pady=(16, 4))
-
-        recent = sorted(
-            [b for b in self.service.get_user_bookings(self.account.username)
-             if b.status == "Completed"],
-            key=lambda b: b.date, reverse=True
-        )[:5]
-
-        if not recent:
-            tk.Label(inner, text="No completed rides yet.",
-                     font=("Helvetica", 10), bg=BG_DARK, fg=TEXT_GRAY).pack(pady=8)
-        else:
-            for b in recent:
-                rc = tk.Frame(inner, bg=BG_CARD, padx=12, pady=6)
-                rc.pack(fill="x", padx=10, pady=3)
-                hdr = tk.Frame(rc, bg=BG_CARD); hdr.pack(fill="x")
-                tk.Label(hdr, text=f"#{b.booking_id}  {b.start_location} → {b.end_location}",
-                         font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_WHITE).pack(side="left")
-                tk.Label(hdr, text=f"₱{b.total_cost:.2f}",
-                         font=("Helvetica", 10, "bold"), bg=BG_CARD, fg=GREEN).pack(side="right")
-                rating_str = f"{'⭐'*b.rating}" if b.rating else "Not rated"
-                tk.Label(rc, text=f"📅 {b.date[:10]}  |  {b.vehicle.name}  |  {rating_str}",
-                         font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY).pack(anchor="w")

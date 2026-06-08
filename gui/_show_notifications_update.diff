@@ -1,0 +1,11 @@
+*** Update File: gui/main_window.py
+@@
+     def show_notifications(self):
+@@
+-        for n in notifs:
+-            if n.get("user") == self.account.username:
+-                n["seen"] = True
++        for n in notifs:
++            if n.get("user") == self.account.username:
++                n["seen"] = True
+

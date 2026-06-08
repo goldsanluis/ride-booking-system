@@ -647,10 +647,19 @@ class BookingForm:
         notes_txt = f"\n📝 Notes: {notes[:60]}" if notes else ""
         sched_txt = f"\n🗓️ Scheduled: {scheduled_time}" if scheduled_time else ""
 
+        # ── Payment method check (only Ride Wallet supported) ───────────────
+        selected_payment_label = self.payment_var.get()
+        if selected_payment_label != "Ride Wallet":
+            messagebox.showinfo(
+                "Payment Method",
+                "Only Ride Wallet is currently supported. Your wallet will be charged.",
+            )
+
         # Driver preview before confirming
         from models.driver import Driver as _Driver
 
         preview_driver = _Driver.get_random_driver()
+
         driver_txt = (
             f"\n\n🚗 Driver: {preview_driver.name}"
             f"\n   Plate: {preview_driver.plate}"
@@ -685,10 +694,11 @@ class BookingForm:
             discount=discount,
             scheduled_time=scheduled_time,
         )
-        self.file_manager.save_bookings(self.service.get_all_bookings())
+        self.service.save_bookings()
 
         # Notification
         import services.notification_service as notif_svc
+
 
         notif_svc.push(
             self.account.username,

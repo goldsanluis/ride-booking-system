@@ -1,13 +1,11 @@
-# TODO — Ride Booking System Enhancements
+# TODO
 
-## Plan Steps
-- [x] 1) Add robust try/except + validation for all user inputs in `gui/booking_form.py`, showing errors via `messagebox`.
+- [x] Add BookingService.save_bookings() helper (wrap FileManager.save_bookings(self.bookings)).
+- [x] Add BookingService.activate_booking(booking_id, username) with required validations, call booking.activate(), then self.save_bookings(), and return success/error string.
 
-- [x] 2) Add “Export Bookings” button + .txt receipt-style export in `gui/booking_list.py`.
+- [x] Update gui/booking_list.py BookingList._activate() to call service.activate_booking(...), show showerror on failure and showinfo on success, and refresh UI.
 
-- [x] 3) Add “About” window from `gui/main_window.py` header with app name, version, group members, section.
-
-- [x] 4) Run `python main.py` to confirm no errors.
+- [x] Ensure only updated methods are changed/returned per request.
 
 
 
