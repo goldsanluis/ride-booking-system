@@ -123,17 +123,28 @@ def add_promo(code: str, ptype: str, value: float,
     return True, f"Promo '{code.strip().upper()}' saved."
 
 
-def delete_promo(code: str):
+def delete_promo(code: str) -> tuple:
     """
     Delete an admin-created promo code.
     Built-in codes cannot be deleted through this function.
 
     Args:
         code (str): The promo code to remove (case-insensitive).
+        
+    Returns: 
+        tuple[bool, str]: (success, message)
     """
+    code  = code.strip().upper()
     extra = _load_extra_promos()
-    extra.pop(code.upper(), None)  # No-op if code doesn't exist
+    
+    if code not in extra:
+        if code in BUILTIN_PROMOS:
+            return False, f"'{code}' is a built-in promo and cannot be deleted."
+        return False, f"'{code}' does not exist."
+ 
+    del extra[code]
     _save_extra_promos(extra)
+    return True, f"'{code}' deleted."
 
 
 def apply_promo(code: str, base_fare: float):
