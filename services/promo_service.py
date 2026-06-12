@@ -201,6 +201,68 @@ def apply_promo(code: str, base_fare: float, vehicle_type: str = None):
     return discount, promo["desc"], None
 
 
+def redeem_promo(code: str) -> bool:
+    """
+    Consume one use of a promo code. Call this ONCE, when a booking using
+    this code is actually confirmed — never during live preview, or every
+    keystroke will burn through the limit.
+ 
+    Built-in promos with a numeric `uses` are copied into the extra-promos
+    file on first redemption, so the remaining count can be persisted
+    without editing source code. Built-ins with uses=None (the default for
+    all current built-ins) are unlimited and need no bookkeeping.
+ 
+    Args:
+        code (str): The promo code being redeemed (case-insensitive).
+ 
+    Returns:
+        bool: True if a use was consumed (or the promo is unlimited),
+              False if the code doesn't exist or has no uses left.
+    """
+    code  = code.strip().upper()
+    extra = _load_extra_promos()
+ 
+    promo = extra.get(code) or BUILTIN_PROMOS.get(code)
+    if not promo:
+        return False
+ 
+    uses = promo.get("uses")
+    if uses is None:
+        return True  # unlimited — nothing to track
+ 
+    if uses <= 0:
+        return False
+ 
+    updated = dict(promo)
+    updated["uses"] = uses - 1
+    extra[code] = updated
+    _save_extra_promos(extra)
+    return True
+
+
+def get_promo_list() -> list:
+    """
+    Return all promos as a list of plain dicts, for GUIs that want to
+    render their own table/list widget instead of parsing text.
+ 
+    Returns:
+        list[dict]: Each dict has keys: code, type, value, min_fare,
+                     desc, uses, vehicle_type.
+    """
+    return [
+        {
+            "code":         code,
+            "type":         info["type"],
+            "value":        info["value"],
+            "min_fare":     info["min_fare"],
+            "desc":         info["desc"],
+            "uses":         info.get("uses"),
+            "vehicle_type": info.get("vehicle_type"),
+        }
+        for code, info in get_all_promos().items()
+    ]
+ 
+ 
 def list_promos():
     """
     Build a human-readable summary of all available promo codes.
