@@ -263,17 +263,18 @@ def get_promo_list() -> list:
     ]
  
  
-def list_promos():
+def list_promos() -> str:
     """
     Build a human-readable summary of all available promo codes.
     Used to display the promo list inside the booking form.
-
+ 
     Returns:
         str: Multi-line string with one promo per line.
     """
     lines = []
-    for code, info in get_all_promos().items():
-        min_text  = f"  (min ₱{info['min_fare']:.0f})" if info["min_fare"] > 0 else ""
-        uses_text = f"  [{info['uses']} uses left]"     if info.get("uses")   else ""
-        lines.append(f"  {code:<12} — {info['desc']}{min_text}{uses_text}")
+    for p in get_promo_list():
+        min_text  = f"  (min ₱{p['min_fare']:.0f})"   if p["min_fare"] > 0    else ""
+        uses_text = f"  [{p['uses']} uses left]"       if p["uses"]            else ""
+        veh_text  = f"  [{p['vehicle_type']} only]"    if p["vehicle_type"]    else ""
+        lines.append(f"  {p['code']:<12} — {p['desc']}{min_text}{uses_text}{veh_text}")
     return "\n".join(lines)
