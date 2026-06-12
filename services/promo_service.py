@@ -86,7 +86,7 @@ def get_all_promos() -> dict:
 
 
 def add_promo(code: str, ptype: str, value: float,
-              min_fare: float, desc: str, uses=None, vehicle_type=None):
+              min_fare: float, desc: str, uses=None, vehicle_type: str=None) -> tuple:
     """
     Add or overwrite an admin-created promo code.
     Built-in codes will be shadowed if the same code is used.
@@ -98,13 +98,29 @@ def add_promo(code: str, ptype: str, value: float,
         min_fare (float):       Minimum fare required to apply the code.
         desc     (str):         Human-readable description shown to users.
         uses     (int | None):  Max redemptions (None = unlimited).
+        vehicle_type (str | None): The type of vehicle the promo applies to (None = all types).
+        
+    Return: tuple[bool, str]: (success, message)
     """
+    if not code or not code.strip():
+        return False, "Promo code cannot be empty."
+    if ptype not in VALID_TYPES:
+        return False, f"Invalid promo type '{ptype}'. Must be 'flat' or 'percent'."
+    if value <= 0:
+        return False, "Discount value must be greater than zero."
+    if min_fare < 0:
+        return False, "Minimum fare cannot be negative."
+    if uses is not None and uses <= 0:
+        return False, "Uses must be a positive number or None for unlimited."
+ 
     extra = _load_extra_promos()
-    extra[code.upper()] = {
+    extra[code.strip().upper()] = {
         "type": ptype, "value": value,
-        "min_fare": min_fare, "desc": desc, "uses": uses, "vehicle_type": vehicle_type
+        "min_fare": min_fare, "desc": desc,
+        "uses": uses, "vehicle_type": vehicle_type,
     }
     _save_extra_promos(extra)
+    return True, f"Promo '{code.strip().upper()}' saved."
 
 
 def delete_promo(code: str):
