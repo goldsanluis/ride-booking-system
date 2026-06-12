@@ -19,153 +19,148 @@ from services.booking_service  import BookingService
 from file_handler.file_manager import FileManager
 from file_handler.account_manager import AccountManager
 
+# ── PUP Design System ─────────────────────────────────────────────────────────
+BG_APP      = "#1C0A0A"
+BG_HEADER   = "#2A1010"
+BG_NAV      = "#220D0D"
+MAROON      = "#800000"
+MAROON_LT   = "#A01515"
+GOLD        = "#C8A951"
+GOLD_BRIGHT = "#E8C96B"
+GOLD_DIM    = "#8B7535"
+TEXT_WHITE  = "#F5F0E8"
+TEXT_MUTED  = "#7A6060"
+TEAL        = "#4ECDC4"   # accent for payment/info
+RED_NOTIF   = "#FF5555"
+
 
 class MainWindow:
-    """
-    Main passenger dashboard.
-    Hosts the booking form on the left and the booking list on the right.
-    """
+    """Main passenger dashboard — PUP Rides redesign."""
 
     def __init__(self, account):
-        self.account      = account
-        self.root         = tk.Tk()
+        self.account         = account
+        self.root            = tk.Tk()
         self._notif_after_id = None
 
-        self.root.title("Ride Booking System")
-        self.root.geometry("1100x700")
-        self.root.configure(bg="#1a1200")
+        self.root.title("PUP Rides")
+        self.root.geometry("1150x720")
+        self.root.configure(bg=BG_APP)
 
         self.file_manager    = FileManager()
         self.account_manager = AccountManager()
         self.service         = BookingService(self.file_manager)
 
-        self.setup_header()
-        self.setup_tabs()
+        self._build_header()
+        self._build_body()
 
         self.root.protocol("WM_DELETE_WINDOW", self.logout)
 
     # ── Header ────────────────────────────────────────────────────────────────
 
-    def setup_header(self):
-        header = tk.Frame(self.root, bg="#2d1f00", pady=10)
+    def _build_header(self):
+        header = tk.Frame(self.root, bg=BG_HEADER)
         header.pack(fill="x")
 
-        title_frame = tk.Frame(header, bg="#2d1f00")
-        title_frame.pack(fill="x", padx=20)
+        # Gold top accent line
+        tk.Frame(header, bg=GOLD, height=3).pack(fill="x")
 
-        tk.Label(
-            title_frame, text="🚗 Ride Booking System",
-            font=("Helvetica", 20, "bold"),
-            bg="#2d1f00", fg="#FFD700",
-        ).pack(side="left")
+        nav = tk.Frame(header, bg=BG_HEADER, padx=24, pady=12)
+        nav.pack(fill="x")
 
-        # Right-side buttons (packed right-to-left)
-        tk.Button(
-            title_frame, text="Logout 🚪",
-            font=("Helvetica", 10, "bold"),
-            bg="#B8860B", fg="white", relief="flat",
-            padx=10, pady=5, cursor="hand2",
-            command=self.logout,
-        ).pack(side="right")
+        # Left: brand
+        brand_frame = tk.Frame(nav, bg=BG_HEADER)
+        brand_frame.pack(side="left")
+        tk.Label(brand_frame, text="🎓 PUP Rides",
+                 font=("Helvetica", 18, "bold"), bg=BG_HEADER, fg=GOLD_BRIGHT).pack(side="left")
+        tk.Label(brand_frame, text="  Polytechnic University of the Philippines",
+                 font=("Helvetica", 9), bg=BG_HEADER, fg=GOLD_DIM).pack(side="left", pady=(4, 0))
 
-        tk.Button(
-            title_frame, text="🔄 Refresh",
-            font=("Helvetica", 10, "bold"),
-            bg="#FFA500", fg="white", relief="flat",
-            padx=10, pady=5, cursor="hand2",
-            command=self.refresh_bookings,
-        ).pack(side="right", padx=5)
+        # Right: action buttons
+        btn_cfg = dict(font=("Helvetica", 9, "bold"), relief="flat",
+                       padx=12, pady=6, cursor="hand2")
+
+        tk.Button(nav, text="Logout", bg=MAROON, fg=GOLD_BRIGHT,
+                  activebackground=MAROON_LT, activeforeground=GOLD_BRIGHT,
+                  command=self.logout, **btn_cfg).pack(side="right", padx=(4, 0))
+
+        tk.Button(nav, text="↺ Refresh", bg=BG_HEADER, fg=TEXT_WHITE,
+                  activebackground=BG_NAV, command=self.refresh_bookings,
+                  **btn_cfg).pack(side="right", padx=4)
 
         self.notif_btn = tk.Button(
-            title_frame, text="🔔 Notifications",
-            font=("Helvetica", 10, "bold"),
-            bg="#2d1f00", fg="#FFD700", relief="flat",
-            padx=10, pady=5, cursor="hand2",
-            command=self._open_notification_center,
-        )
-        self.notif_btn.pack(side="right", padx=5)
+            nav, text="🔔 Notifications", bg=BG_HEADER, fg=GOLD,
+            activebackground=BG_NAV, command=self._open_notification_center,
+            **btn_cfg)
+        self.notif_btn.pack(side="right", padx=4)
 
-        tk.Button(
-            title_frame, text="💳 Payment",
-            font=("Helvetica", 10, "bold"),
-            bg="#2d1f00", fg="#4ecca3", relief="flat",
-            padx=10, pady=5, cursor="hand2",
-            command=self._open_payment_methods,
-        ).pack(side="right", padx=5)
+        tk.Button(nav, text="💳 Payment", bg=BG_HEADER, fg=TEAL,
+                  activebackground=BG_NAV, command=self._open_payment_methods,
+                  **btn_cfg).pack(side="right", padx=4)
 
-        tk.Button(
-            title_frame, text="ℹ️ About",
-            font=("Helvetica", 10, "bold"),
-            bg="#2d1f00", fg="#FFD700", relief="flat",
-            padx=10, pady=5, cursor="hand2",
-            command=self._open_about,
-        ).pack(side="right", padx=5)
+        tk.Button(nav, text="ℹ About", bg=BG_HEADER, fg=TEXT_MUTED,
+                  activebackground=BG_NAV, command=self._open_about,
+                  **btn_cfg).pack(side="right", padx=4)
 
-        tk.Label(
-            header,
-            text=f"Welcome, {self.account.name}! 👑",
-            font=("Helvetica", 11),
-            bg="#2d1f00", fg="#FFA500",
-        ).pack()
+        # Welcome bar below nav
+        sub = tk.Frame(self.root, bg=MAROON, padx=24, pady=8)
+        sub.pack(fill="x")
+        tk.Label(sub, text=f"Good day, {self.account.name}!  🎓",
+                 font=("Helvetica", 11), bg=MAROON, fg=GOLD_BRIGHT).pack(side="left")
+        tk.Label(sub, text="PUP — Ang Paaralan ng Bayan",
+                 font=("Helvetica", 9, "italic"), bg=MAROON, fg=GOLD_DIM).pack(side="right")
 
         self._refresh_notif_badge()
 
     def _refresh_notif_badge(self):
-        """Poll for unread notifications every 5 s and update the button label."""
         try:
             if not self.root.winfo_exists():
                 return
             import services.notification_service as ns
             count = ns.get_unread_count(self.account.username)
             if count > 0:
-                self.notif_btn.config(fg="#FF4444", text=f"🔔 ({count}) Notifications")
+                self.notif_btn.config(fg=RED_NOTIF, text=f"🔔 ({count}) Notifications")
             else:
-                self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
+                self.notif_btn.config(fg=GOLD, text="🔔 Notifications")
         except Exception:
             pass
-
         if self.root.winfo_exists():
             self._notif_after_id = self.root.after(5000, self._refresh_notif_badge)
 
-    # ── Main layout ───────────────────────────────────────────────────────────
+    # ── Body ─────────────────────────────────────────────────────────────────
 
-    def setup_tabs(self):
-        tab_frame = tk.Frame(self.root, bg="#1a1200")
-        tab_frame.pack(fill="both", expand=True, padx=20, pady=10)
+    def _build_body(self):
+        body = tk.Frame(self.root, bg=BG_APP)
+        body.pack(fill="both", expand=True, padx=20, pady=14)
 
-        # ── Left panel: booking form + wallet ─────────────────────────────────
-        left_frame  = tk.Frame(tab_frame, bg="#1a1200")
-        left_frame.pack(side="left", fill="both", expand=True, padx=5)
+        # ── Left column: booking form + wallet ────────────────────────────────
+        left = tk.Frame(body, bg=BG_APP)
+        left.pack(side="left", fill="both", expand=True, padx=(0, 8))
 
-        left_canvas = tk.Canvas(left_frame, bg="#1a1200", highlightthickness=0)
-        left_scroll = tk.Scrollbar(left_frame, orient="vertical", command=left_canvas.yview)
+        left_canvas = tk.Canvas(left, bg=BG_APP, highlightthickness=0)
+        left_scroll = tk.Scrollbar(left, orient="vertical", command=left_canvas.yview)
         left_canvas.configure(yscrollcommand=left_scroll.set)
         left_scroll.pack(side="right", fill="y")
         left_canvas.pack(side="left", fill="both", expand=True)
 
-        left_inner = tk.Frame(left_canvas, bg="#1a1200")
-        left_win   = left_canvas.create_window((0, 0), window=left_inner, anchor="nw")
-        left_inner.bind(
-            "<Configure>",
-            lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all")),
-        )
-        left_canvas.bind(
-            "<Configure>",
-            lambda e: left_canvas.itemconfig(left_win, width=e.width),
-        )
+        left_inner = tk.Frame(left_canvas, bg=BG_APP)
+        left_win = left_canvas.create_window((0, 0), window=left_inner, anchor="nw")
+        left_inner.bind("<Configure>",
+                        lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all")))
+        left_canvas.bind("<Configure>",
+                         lambda e: left_canvas.itemconfig(left_win, width=e.width))
 
         self.booking_form = BookingForm(
             left_inner, self.service, self.file_manager,
             self.refresh, self.account, self.account_manager,
         )
-        self.booking_form.frame.pack(fill="both", expand=True, pady=5)
+        self.booking_form.frame.pack(fill="both", expand=True, pady=(0, 8))
 
         self.wallet_panel = WalletPanel(left_inner, self.account, self.account_manager)
-        self.wallet_panel.frame.pack(fill="x", pady=5)
+        self.wallet_panel.frame.pack(fill="x")
 
-        # ── Right panel: booking list ─────────────────────────────────────────
-        self.booking_list = BookingList(tab_frame, self.service, self.account)
-        self.booking_list.frame.pack(side="right", fill="both", expand=True, padx=5)
+        # ── Right column: booking list ────────────────────────────────────────
+        self.booking_list = BookingList(body, self.service, self.account)
+        self.booking_list.frame.pack(side="right", fill="both", expand=True, padx=(8, 0))
 
     # ── Menu actions ──────────────────────────────────────────────────────────
 
@@ -173,7 +168,7 @@ class MainWindow:
         from gui.notification_center import NotificationCenter
         import services.notification_service as ns
         ns.mark_all_seen(self.account.username)
-        self.notif_btn.config(fg="#FFD700", text="🔔 Notifications")
+        self.notif_btn.config(fg=GOLD, text="🔔 Notifications")
         NotificationCenter(self.root, self.account.username)
 
     def _open_payment_methods(self):
@@ -184,7 +179,7 @@ class MainWindow:
         from gui.about_window import AboutWindow
         AboutWindow(
             self.root,
-            app_name="Ride Booking System",
+            app_name="PUP Rides",
             app_version="1.0",
             group_members=[
                 "Domingo, Franco Luis",
@@ -204,35 +199,34 @@ class MainWindow:
     # ── Refresh / Logout ──────────────────────────────────────────────────────
 
     def refresh(self):
-        """Refresh the booking list panel."""
         self.booking_list.refresh()
 
     def refresh_bookings(self):
-        """Reload bookings from disk and update all panels."""
         self.service = BookingService(self.file_manager)
         self.wallet_panel.refresh_balance()
         self.booking_list.service = self.service
         self.refresh()
 
     def logout(self):
-        """Confirm logout, destroy window, and return to login screen."""
-        if not messagebox.askyesno("Logout", "Are you sure you want to logout?"):
+        if not messagebox.askyesno("Sign out", "Are you sure you want to sign out?"):
             return
-
         try:
             if self._notif_after_id is not None:
                 self.root.after_cancel(self._notif_after_id)
         except Exception:
             pass
-
         self.root.destroy()
-
         from gui.login_window import LoginWindow
         login   = LoginWindow()
         account = login.run()
         if account:
             MainWindow(account).run()
 
+    def setup_header(self):
+        self._build_header()
+
+    def setup_tabs(self):
+        self._build_body()
+
     def run(self):
-        """Start the Tkinter event loop."""
         self.root.mainloop()
