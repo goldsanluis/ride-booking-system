@@ -25,14 +25,17 @@ import os
 DATA_DIR    = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 PROMOS_FILE = os.path.join(DATA_DIR, "promos.json")
 
-# ── Built-in promo codes (always available, cannot be deleted) ────────────────
+VALID_TYPES = {"flat", "percent"}
+
+# ── Built-in promo codes (always available, cannot be deleted)
+# "vehicle type": None means the promo applies to all vehicle types
 BUILTIN_PROMOS = {
-    "RIDE10":   {"type": "flat",    "value": 10.0,  "min_fare": 50.0,  "desc": "₱10 off",               "uses": None},
-    "RIDE50":   {"type": "flat",    "value": 50.0,  "min_fare": 200.0, "desc": "₱50 off (min ₱200)",    "uses": None},
-    "SAVE20":   {"type": "percent", "value": 20.0,  "min_fare": 100.0, "desc": "20% off (min ₱100)",    "uses": None},
-    "NEWUSER":  {"type": "flat",    "value": 80.0,  "min_fare": 0.0,   "desc": "₱80 welcome discount",  "uses": None},
-    "VANRIDE":  {"type": "flat",    "value": 100.0, "min_fare": 300.0, "desc": "₱100 off Van rides",    "uses": None},
-    "PEAKHOUR": {"type": "percent", "value": 10.0,  "min_fare": 0.0,   "desc": "10% surge relief",      "uses": None},
+    "RIDE10":   {"type": "flat",    "value": 10.0,  "min_fare": 50.0,  "desc": "₱10 off",               "uses": None, "vehicle_type": None  },
+    "RIDE50":   {"type": "flat",    "value": 50.0,  "min_fare": 200.0, "desc": "₱50 off (min ₱200)",    "uses": None, "vehicle_type": None  },
+    "SAVE20":   {"type": "percent", "value": 20.0,  "min_fare": 100.0, "desc": "20% off (min ₱100)",    "uses": None, "vehicle_type": None  },
+    "NEWUSER":  {"type": "flat",    "value": 80.0,  "min_fare": 0.0,   "desc": "₱80 welcome discount",  "uses": None, "vehicle_type": None  },
+    "VANRIDE":  {"type": "flat",    "value": 100.0, "min_fare": 300.0, "desc": "₱100 off Van rides",    "uses": None, "vehicle_type": None  },
+    "PEAKHOUR": {"type": "percent", "value": 10.0,  "min_fare": 0.0,   "desc": "10% surge relief",      "uses": None, "vehicle_type": None  },
 }
 
 
@@ -83,7 +86,7 @@ def get_all_promos() -> dict:
 
 
 def add_promo(code: str, ptype: str, value: float,
-              min_fare: float, desc: str, uses=None):
+              min_fare: float, desc: str, uses=None, vehicle_type=None):
     """
     Add or overwrite an admin-created promo code.
     Built-in codes will be shadowed if the same code is used.
@@ -99,7 +102,7 @@ def add_promo(code: str, ptype: str, value: float,
     extra = _load_extra_promos()
     extra[code.upper()] = {
         "type": ptype, "value": value,
-        "min_fare": min_fare, "desc": desc, "uses": uses
+        "min_fare": min_fare, "desc": desc, "uses": uses, "vehicle_type": vehicle_type
     }
     _save_extra_promos(extra)
 
