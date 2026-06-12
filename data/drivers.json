@@ -2,7 +2,7 @@
     "drivers": [
         {
             "driver_id": "driver_001",
-            "username": "driver",
+            "username": "juan",
             "password": "password123",
             "name": "Juan dela Cruz",
             "plate": "ABC 1234",
