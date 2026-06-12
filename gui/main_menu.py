@@ -40,7 +40,7 @@ class MainMenu:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Ride Booking System")
-        self.root.geometry("500x400")
+        self.root.geometry("600x500")
         self.root.configure(bg=BG_DARK)
         self.root.resizable(False, False)  # Fixed window size
 

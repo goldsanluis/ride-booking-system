@@ -1,4 +1,5 @@
-"""gui/driver_login.py
+"""
+gui/driver_login.py
 ----------------------
 
 author = "Ghani Regina Gold San Luis"
@@ -23,11 +24,12 @@ GOLD_ACCENT = "#FFA500"
 TEXT_WHITE  = "#FFFFFF"
 TEXT_GRAY   = "#9a8060"
 
+
 class DriverLoginWindow:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Ride Booking System - Driver Login")
-        self.root.geometry("400x500")
+        self.root.geometry("520x720")
         self.root.configure(bg=BG_DARK)
         self.root.resizable(False, False)
 
@@ -36,15 +38,40 @@ class DriverLoginWindow:
 
         self.setup_ui()
 
+    # ---------------- BUTTON HOVER ----------------
+    def on_enter(self, btn, color):
+        btn.configure(bg=color)
+
+    def on_leave(self, btn, color):
+        btn.configure(bg=color)
+
+    # ---------------- PASSWORD TOGGLE ----------------
+    def toggle_password(self):
+        if self.password_entry.cget("show") == "*":
+            self.password_entry.configure(show="")
+            self.eye_btn.configure(text="🙈")
+        else:
+            self.password_entry.configure(show="*")
+            self.eye_btn.configure(text="👁")
+
+    # ---------------- FLOATING LABEL BEHAVIOR ----------------
+    def float_up(self, label):
+        label.configure(fg=GOLD)
+
+    def float_down(self, label, entry):
+        if not entry.get():
+            label.configure(fg=TEXT_GRAY)
+
+    # ---------------- UI SETUP ----------------
     def setup_ui(self):
-        # Logo/Header
-        header = tk.Frame(self.root, bg=BG_DARK, pady=20)
+        # Header
+        header = tk.Frame(self.root, bg=BG_DARK, pady=25)
         header.pack(fill="x")
 
         tk.Label(
             header,
             text="🚕",
-            font=("Helvetica", 40),
+            font=("Segoe UI Emoji", 44),
             bg=BG_DARK,
             fg=GOLD
         ).pack()
@@ -52,90 +79,132 @@ class DriverLoginWindow:
         tk.Label(
             header,
             text="Driver Login",
-            font=("Helvetica", 18, "bold"),
+            font=("Segoe UI", 26, "bold"),
             bg=BG_DARK,
             fg=GOLD
-        ).pack()
+        ).pack(pady=(5, 0))
 
-        # Login form
-        form_frame = tk.Frame(self.root, bg=BG_DARK)
-        form_frame.pack(fill="both", expand=True, padx=30, pady=20)
+        # CARD
+        form_frame = tk.Frame(
+            self.root,
+            bg=BG_CARD,
+            padx=35,
+            pady=35
+        )
+        form_frame.pack(fill="both", expand=True, padx=30, pady=(10, 25))
 
-        # Username
-        tk.Label(
+        # ---------------- USERNAME (Floating Label) ----------------
+        self.username_label = tk.Label(
             form_frame,
-            text="Username:",
-            font=("Helvetica", 11),
-            bg=BG_DARK,
-            fg=TEXT_WHITE
-        ).pack(anchor="w", pady=(10, 5))
+            text="Username",
+            font=("Segoe UI", 10, "bold"),
+            bg=BG_CARD,
+            fg=TEXT_GRAY
+        )
+        self.username_label.pack(anchor="w")
 
         self.username_entry = tk.Entry(
             form_frame,
-            font=("Helvetica", 11),
+            font=("Segoe UI", 13),
             bg=BG_ENTRY,
             fg=TEXT_WHITE,
-            width=30
+            insertbackground=TEXT_WHITE,
+            relief="flat",
+            bd=0
         )
-        self.username_entry.pack(fill="x", pady=(0, 15))
+        self.username_entry.pack(fill="x", ipady=10, pady=(5, 18))
 
-        # Password
-        tk.Label(
+        self.username_entry.bind("<FocusIn>", lambda e: self.float_up(self.username_label))
+        self.username_entry.bind("<FocusOut>", lambda e: self.float_down(self.username_label, self.username_entry))
+
+        # ---------------- PASSWORD (Floating Label + Eye Button) ----------------
+        self.password_label = tk.Label(
             form_frame,
-            text="Password:",
-            font=("Helvetica", 11),
-            bg=BG_DARK,
-            fg=TEXT_WHITE
-        ).pack(anchor="w", pady=(10, 5))
+            text="Password",
+            font=("Segoe UI", 10, "bold"),
+            bg=BG_CARD,
+            fg=TEXT_GRAY
+        )
+        self.password_label.pack(anchor="w")
+
+        pass_frame = tk.Frame(form_frame, bg=BG_CARD)
+        pass_frame.pack(fill="x", pady=(5, 22))
 
         self.password_entry = tk.Entry(
-            form_frame,
-            font=("Helvetica", 11),
+            pass_frame,
+            font=("Segoe UI", 13),
             bg=BG_ENTRY,
             fg=TEXT_WHITE,
-            show="*",
-            width=30
+            insertbackground=TEXT_WHITE,
+            relief="flat",
+            bd=0,
+            show="*"
         )
-        self.password_entry.pack(fill="x", pady=(0, 20))
+        self.password_entry.pack(side="left", fill="x", expand=True, ipady=10)
 
-        # Login button
-        tk.Button(
+        self.eye_btn = tk.Button(
+            pass_frame,
+            text="👁",
+            font=("Segoe UI", 11),
+            bg=BG_ENTRY,
+            fg=TEXT_WHITE,
+            relief="flat",
+            cursor="hand2",
+            command=self.toggle_password
+        )
+        self.eye_btn.pack(side="right", padx=(8, 0))
+
+        self.password_entry.bind("<FocusIn>", lambda e: self.float_up(self.password_label))
+        self.password_entry.bind("<FocusOut>", lambda e: self.float_down(self.password_label, self.password_entry))
+
+        # ---------------- LOGIN BUTTON (Pseudo-rounded) ----------------
+        login_btn = tk.Button(
             form_frame,
-            text="Login 🚪",
-            font=("Helvetica", 12, "bold"),
+            text="LOGIN",
+            font=("Segoe UI", 13, "bold"),
             bg=GOLD,
             fg=BG_DARK,
             relief="flat",
-            padx=20,
-            pady=10,
+            pady=14,
             cursor="hand2",
             command=self.login
-        ).pack(fill="x", pady=10)
+        )
+        login_btn.pack(fill="x", pady=(10, 8))
 
-        # Back button
-        tk.Button(
+        login_btn.bind("<Enter>", lambda e: self.on_enter(login_btn, GOLD_ACCENT))
+        login_btn.bind("<Leave>", lambda e: self.on_leave(login_btn, GOLD))
+
+        # ---------------- BACK BUTTON ----------------
+        back_btn = tk.Button(
             form_frame,
-            text="← Back to Menu",
-            font=("Helvetica", 10),
+            text="← BACK TO MENU",
+            font=("Segoe UI", 11),
             bg=GOLD_DARK,
             fg=TEXT_WHITE,
             relief="flat",
-            padx=20,
-            pady=8,
+            pady=10,
             cursor="hand2",
             command=self.back_to_menu
-        ).pack(fill="x", pady=5)
+        )
+        back_btn.pack(fill="x", pady=5)
 
-        # Info label
-        tk.Label(
+        back_btn.bind("<Enter>", lambda e: self.on_enter(back_btn, "#996f00"))
+        back_btn.bind("<Leave>", lambda e: self.on_leave(back_btn, GOLD_DARK))
+
+        # Divider
+        tk.Frame(form_frame, bg="#5c4200", height=1).pack(fill="x", pady=20)
+
+        # Test Account Info
+        tk.Message(
             form_frame,
-            text="Test account:\nUsername: driver\nPassword: password123",
-            font=("Helvetica", 9),
-            bg=BG_DARK,
+            text="TEST ACCOUNT\nUsername: juan\nPassword: password123",
+            font=("Consolas", 10),
+            bg=BG_CARD,
             fg=TEXT_GRAY,
-            justify="left"
-        ).pack(anchor="w", pady=20)
+            width=320
+        ).pack(anchor="w")
 
+    # ---------------- LOGIN LOGIC ----------------
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
@@ -149,6 +218,7 @@ class DriverLoginWindow:
         if driver:
             if "wallet_balance" not in driver:
                 driver["wallet_balance"] = 0.0
+
             self.logged_in_driver = driver
             self.root.destroy()
         else:
@@ -161,3 +231,4 @@ class DriverLoginWindow:
     def run(self):
         self.root.mainloop()
         return self.logged_in_driver
+    
