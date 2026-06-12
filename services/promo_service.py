@@ -147,14 +147,19 @@ def delete_promo(code: str) -> tuple:
     return True, f"'{code}' deleted."
 
 
-def apply_promo(code: str, base_fare: float):
+def apply_promo(code: str, base_fare: float, vehicle_type: str = None):
     """
     Validate and calculate the discount for a promo code.
-
+    Pure / read-only — does NOT consume a use, so it's safe to call
+    repeatedly while the user is typing (live preview).
+ 
     Args:
-        code      (str):   The promo code entered by the passenger.
-        base_fare (float): The fare before any discount is applied.
-
+        code         (str):        The promo code entered by the passenger.
+        base_fare    (float):      The fare before any discount is applied.
+        vehicle_type (str | None): 'Car'/'Van'/'Bike'. If provided and the
+                                    promo is restricted to a different
+                                    vehicle type, the promo is rejected.
+ 
     Returns:
         tuple[float, str, str | None]:
             - discount_amount (float): ₱ amount to subtract (0.0 on failure).
@@ -165,11 +170,11 @@ def apply_promo(code: str, base_fare: float):
 
     if not code:
         return 0.0, "", "No promo code entered."
-
+ 
     promo = get_all_promos().get(code)
     if not promo:
         return 0.0, "", f"'{code}' is not a valid promo code."
-
+ 
     # Check minimum fare requirement
     if base_fare < promo["min_fare"]:
         return 0.0, "", (
@@ -177,12 +182,22 @@ def apply_promo(code: str, base_fare: float):
             f"Your fare is ₱{base_fare:.2f}."
         )
 
+    # Check vehicle restriction (only enforced if caller passes vehicle_type)
+    required_vehicle = promo.get("vehicle_type")
+    if required_vehicle and vehicle_type and vehicle_type != required_vehicle:
+        return 0.0, "", f"'{code}' is only valid for {required_vehicle} rides."
+ 
+    # Check remaining uses
+    remaining = promo.get("uses")
+    if remaining is not None and remaining <= 0:
+        return 0.0, "", f"'{code}' has reached its usage limit."
+ 
     # Calculate discount based on promo type
     if promo["type"] == "flat":
         discount = min(promo["value"], base_fare)  # Cannot discount more than the fare
     else:  # percent
         discount = round(base_fare * promo["value"] / 100, 2)
-
+ 
     return discount, promo["desc"], None
 
 
