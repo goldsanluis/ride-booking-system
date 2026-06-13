@@ -104,6 +104,8 @@ class MainMenu:
         if account:
             app = MainWindow(account)
             app.run()
+        else:
+            MainMenu().run()
 
     def driver_mode(self):
         """
@@ -116,6 +118,8 @@ class MainMenu:
         if driver:
             app = DriverDashboard(driver)
             app.run()
+        else:
+            MainMenu().run()
 
     def run(self):
         """Start the Tkinter event loop for this window."""
