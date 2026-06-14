@@ -13,249 +13,156 @@ import tkinter as tk
 from tkinter import messagebox
 from file_handler.driver_manager import DriverManager
 
-
-# Professional Slate & Blue Theme Colors
-BG_DARK     = "#0f172a"   # deep slate background
-BG_CARD     = "#1e293b"   # card surface
-BG_ENTRY    = "#334155"   # input field background
-ACCENT      = "#3b82f6"   # primary blue accent
-ACCENT_DARK = "#1d4ed8"   # darker blue (hover)
-ACCENT_LIGHT = "#60a5fa"  # lighter blue (focus highlight)
-TEXT_WHITE  = "#f8fafc"
-TEXT_GRAY   = "#94a3b8"
-BORDER      = "#475569"
-
-FONT_FAMILY = "Segoe UI"
+# ── PUP Maroon, Gold & White Design System ────────────────────────────────────
+BG_APP      = "#1a0000"   # Deep dark maroon background
+BG_SURFACE  = "#800000"   # Maroon card surface
+BG_FIELD    = "#6b0000"   # Input field background
+MAROON      = "#800000"   # PUP Maroon
+GOLD        = "#FFD700"   # PUP Gold
+TEXT_WHITE  = "#FFFFFF"   # White text
+TEXT_MUTED  = "#FFFFFF"   # White subtext
+RED_ERR     = "#FF6B6B"   # Error red
+DIVIDER     = "#990000"   # Divider line
 
 
 class DriverLoginWindow:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Ride Booking System - Driver Login")
-        self.root.geometry("520x720")
-        self.root.configure(bg=BG_DARK)
+        self.root.title("PUP Rides — Driver Login")
+        self.root.geometry("420x600")
+        self.root.configure(bg=BG_APP)
         self.root.resizable(False, False)
 
         self.driver_manager = DriverManager()
         self.logged_in_driver = None
+        self._show_pw = False
 
         self.setup_ui()
 
-    # ---------------- BUTTON HOVER ----------------
-    def on_enter(self, btn, color):
-        btn.configure(bg=color)
-
-    def on_leave(self, btn, color):
-        btn.configure(bg=color)
-
-    # ---------------- PASSWORD TOGGLE ----------------
+    # ── Password toggle ───────────────────────────────────────────────────────
     def toggle_password(self):
-        if self.password_entry.cget("show") == "*":
-            self.password_entry.configure(show="")
-            self.eye_btn.configure(text="Hide")
-        else:
-            self.password_entry.configure(show="*")
-            self.eye_btn.configure(text="Show")
+        self._show_pw = not self._show_pw
+        self.password_entry.configure(show="" if self._show_pw else "●")
+        self.eye_btn.configure(text="🙈" if self._show_pw else "👁")
 
-    # ---------------- FLOATING LABEL BEHAVIOR ----------------
-    def float_up(self, label):
-        label.configure(fg=ACCENT_LIGHT)
-
-    def float_down(self, label, entry):
-        if not entry.get():
-            label.configure(fg=TEXT_GRAY)
-
-    # ---------------- UI SETUP ----------------
+    # ── UI Setup ──────────────────────────────────────────────────────────────
     def setup_ui(self):
-        # Header
-        header = tk.Frame(self.root, bg=BG_DARK, pady=30)
+        # ── Header (matches login_window style) ───────────────────────────────
+        header = tk.Frame(self.root, bg=MAROON, padx=18, pady=18)
         header.pack(fill="x")
 
-        tk.Label(
-            header,
-            text="🚕",
-            font=("Segoe UI Emoji", 48),
-            bg=BG_DARK,
-            fg=ACCENT_LIGHT
-        ).pack()
+        tk.Frame(header, bg=BG_APP, height=6).pack(fill="x", pady=(0, 10))
 
-        tk.Label(
-            header,
-            text="Driver Login",
-            font=(FONT_FAMILY, 28, "bold"),
-            bg=BG_DARK,
-            fg=TEXT_WHITE
-        ).pack(pady=(8, 2))
+        title_row = tk.Frame(header, bg=MAROON)
+        title_row.pack(fill="x")
 
-        tk.Label(
-            header,
-            text="Sign in to access your driver dashboard",
-            font=(FONT_FAMILY, 10),
-            bg=BG_DARK,
-            fg=TEXT_GRAY
-        ).pack()
+        tk.Label(title_row, text="🚕", font=("Helvetica", 34),
+                 bg=MAROON, fg=GOLD).pack(side="left")
 
-        # CARD
-        form_frame = tk.Frame(
-            self.root,
-            bg=BG_CARD,
-            padx=35,
-            pady=35,
-            highlightbackground=BORDER,
-            highlightthickness=1
-        )
-        form_frame.pack(fill="both", expand=True, padx=30, pady=(15, 25))
+        txt_wrap = tk.Frame(title_row, bg=MAROON)
+        txt_wrap.pack(side="left", fill="x", expand=True, padx=(14, 0))
 
-        # ---------------- USERNAME (Floating Label) ----------------
-        self.username_label = tk.Label(
-            form_frame,
-            text="Username",
-            font=(FONT_FAMILY, 10, "bold"),
-            bg=BG_CARD,
-            fg=TEXT_GRAY
-        )
-        self.username_label.pack(anchor="w")
+        tk.Label(txt_wrap, text="PUP Rides",
+                 font=("Helvetica", 24, "bold"), bg=MAROON, fg=GOLD,
+                 justify="left").pack(anchor="w")
+        tk.Label(txt_wrap, text="Driver Portal",
+                 font=("Helvetica", 10), bg=MAROON, fg=TEXT_MUTED,
+                 justify="left").pack(anchor="w", pady=(4, 0))
 
+        tk.Label(header, text="Polytechnic University of the Philippines",
+                 font=("Helvetica", 8), bg=MAROON, fg=GOLD).pack(anchor="w", pady=(10, 0))
+
+        # Gold accent line
+        tk.Frame(self.root, bg=GOLD, height=3).pack(fill="x", pady=(10, 0))
+
+        # ── Card ──────────────────────────────────────────────────────────────
+        card = tk.Frame(self.root, bg=BG_SURFACE, padx=34, pady=28)
+        card.pack(fill="both", expand=True, padx=22, pady=18)
+
+        tk.Label(card, text="Welcome, Driver",
+                 font=("Helvetica", 16, "bold"), bg=BG_SURFACE, fg=TEXT_WHITE).pack(anchor="w")
+        tk.Label(card, text="Sign in to your driver dashboard",
+                 font=("Helvetica", 10), bg=BG_SURFACE, fg=TEXT_MUTED).pack(anchor="w", pady=(2, 12))
+
+        tk.Frame(card, bg=DIVIDER, height=1).pack(fill="x", pady=(0, 12))
+
+        # Username
+        tk.Label(card, text="Username", font=("Helvetica", 10, "bold"),
+                 bg=BG_SURFACE, fg=GOLD).pack(anchor="w", pady=(8, 2))
+        wrap_u = tk.Frame(card, bg=GOLD, pady=1)
+        wrap_u.pack(fill="x", pady=(0, 6))
+        inner_u = tk.Frame(wrap_u, bg=BG_FIELD, padx=12, pady=7)
+        inner_u.pack(fill="x")
         self.username_entry = tk.Entry(
-            form_frame,
-            font=(FONT_FAMILY, 13),
-            bg=BG_ENTRY,
-            fg=TEXT_WHITE,
-            insertbackground=TEXT_WHITE,
-            relief="flat",
-            bd=0,
-            highlightthickness=1,
-            highlightbackground=BORDER,
-            highlightcolor=ACCENT
-        )
-        self.username_entry.pack(fill="x", ipady=10, pady=(6, 20))
+            inner_u, font=("Helvetica", 11),
+            bg=BG_FIELD, fg=TEXT_WHITE, insertbackground=GOLD,
+            relief="flat", bd=0)
+        self.username_entry.pack(fill="x")
 
-        self.username_entry.bind("<FocusIn>", lambda e: self.float_up(self.username_label))
-        self.username_entry.bind("<FocusOut>", lambda e: self.float_down(self.username_label, self.username_entry))
-
-        # ---------------- PASSWORD (Floating Label + Eye Button) ----------------
-        self.password_label = tk.Label(
-            form_frame,
-            text="Password",
-            font=(FONT_FAMILY, 10, "bold"),
-            bg=BG_CARD,
-            fg=TEXT_GRAY
-        )
-        self.password_label.pack(anchor="w")
-
-        pass_frame = tk.Frame(
-            form_frame,
-            bg=BG_ENTRY,
-            highlightthickness=1,
-            highlightbackground=BORDER,
-            highlightcolor=ACCENT
-        )
-        pass_frame.pack(fill="x", pady=(6, 24))
-
+        # Password
+        tk.Label(card, text="Password", font=("Helvetica", 10, "bold"),
+                 bg=BG_SURFACE, fg=GOLD).pack(anchor="w", pady=(8, 2))
+        wrap_p = tk.Frame(card, bg=GOLD, pady=1)
+        wrap_p.pack(fill="x", pady=(0, 6))
+        inner_p = tk.Frame(wrap_p, bg=BG_FIELD, padx=10, pady=6)
+        inner_p.pack(fill="x")
         self.password_entry = tk.Entry(
-            pass_frame,
-            font=(FONT_FAMILY, 13),
-            bg=BG_ENTRY,
-            fg=TEXT_WHITE,
-            insertbackground=TEXT_WHITE,
-            relief="flat",
-            bd=0,
-            show="*"
-        )
-        self.password_entry.pack(side="left", fill="x", expand=True, ipady=10, padx=(8, 0))
-
+            inner_p, font=("Helvetica", 11),
+            bg=BG_FIELD, fg=TEXT_WHITE, insertbackground=GOLD,
+            relief="flat", bd=0, show="●")
+        self.password_entry.pack(side="left", fill="x", expand=True)
         self.eye_btn = tk.Button(
-            pass_frame,
-            text="Show",
-            font=(FONT_FAMILY, 9, "bold"),
-            bg=BG_ENTRY,
-            fg=ACCENT_LIGHT,
-            relief="flat",
-            cursor="hand2",
-            activebackground=BG_ENTRY,
-            activeforeground=ACCENT_LIGHT,
-            command=self.toggle_password
-        )
-        self.eye_btn.pack(side="right", padx=(8, 10))
+            inner_p, text="👁",
+            font=("Helvetica", 10, "bold"),
+            bg=GOLD, fg=BG_APP, relief="flat", bd=0,
+            padx=8, pady=4, cursor="hand2",
+            activebackground=BG_APP, activeforeground=GOLD,
+            command=self.toggle_password)
+        self.eye_btn.pack(side="left", padx=(8, 0))
 
-        self.password_entry.bind("<FocusIn>", lambda e: self.float_up(self.password_label))
-        self.password_entry.bind("<FocusOut>", lambda e: self.float_down(self.password_label, self.password_entry))
+        # Error label
+        self.err_label = tk.Label(card, text="", font=("Helvetica", 9),
+                                  bg=BG_SURFACE, fg=RED_ERR, wraplength=320, justify="left")
+        self.err_label.pack(anchor="w", pady=(2, 0))
 
-        # ---------------- LOGIN BUTTON ----------------
-        login_btn = tk.Button(
-            form_frame,
-            text="LOG IN",
-            font=(FONT_FAMILY, 13, "bold"),
-            bg=ACCENT,
-            fg=TEXT_WHITE,
-            activebackground=ACCENT_DARK,
-            activeforeground=TEXT_WHITE,
-            relief="flat",
-            pady=14,
-            cursor="hand2",
-            command=self.login
-        )
-        login_btn.pack(fill="x", pady=(12, 10))
-
-        login_btn.bind("<Enter>", lambda e: self.on_enter(login_btn, ACCENT_DARK))
-        login_btn.bind("<Leave>", lambda e: self.on_leave(login_btn, ACCENT))
-
-        # ---------------- BACK BUTTON ----------------
-        back_btn = tk.Button(
-            form_frame,
-            text="← Back to Menu",
-            font=(FONT_FAMILY, 11),
-            bg=BG_ENTRY,
-            fg=TEXT_WHITE,
-            activebackground=BORDER,
-            activeforeground=TEXT_WHITE,
-            relief="flat",
-            pady=10,
-            cursor="hand2",
-            command=self.back_to_menu
-        )
-        back_btn.pack(fill="x", pady=5)
-
-        back_btn.bind("<Enter>", lambda e: self.on_enter(back_btn, BORDER))
-        back_btn.bind("<Leave>", lambda e: self.on_leave(back_btn, BG_ENTRY))
+        # Login button
+        btn_wrap = tk.Frame(card, bg=GOLD, pady=1)
+        btn_wrap.pack(fill="x", pady=(20, 6))
+        tk.Button(btn_wrap, text="Sign In →",
+                  font=("Helvetica", 12, "bold"),
+                  bg=GOLD, fg=BG_APP, relief="flat",
+                  padx=10, pady=12, cursor="hand2",
+                  activebackground=BG_APP, activeforeground=GOLD,
+                  command=self.login).pack(fill="x")
 
         # Divider
-        tk.Frame(form_frame, bg=BORDER, height=1).pack(fill="x", pady=22)
+        tk.Frame(card, bg=DIVIDER, height=1).pack(fill="x", pady=12)
 
-        # Test Account Info
-        info_frame = tk.Frame(
-            form_frame,
-            bg=BG_ENTRY,
-            highlightbackground=BORDER,
-            highlightthickness=1
-        )
-        info_frame.pack(fill="x")
+        # Back button
+        tk.Button(card, text="← Back to Menu",
+                  font=("Helvetica", 10), bg=BG_SURFACE, fg=GOLD,
+                  relief="flat", cursor="hand2",
+                  activeforeground=GOLD, activebackground=BG_SURFACE,
+                  command=self.back_to_menu).pack()
 
-        tk.Label(
-            info_frame,
-            text="TEST ACCOUNT",
-            font=(FONT_FAMILY, 9, "bold"),
-            bg=BG_ENTRY,
-            fg=ACCENT_LIGHT,
-            anchor="w"
-        ).pack(fill="x", padx=12, pady=(10, 2))
+        # Test account info
+        info = tk.Frame(card, bg=BG_FIELD, padx=10, pady=8)
+        info.pack(fill="x", pady=(12, 0))
+        tk.Label(info, text="TEST ACCOUNT",
+                 font=("Helvetica", 8, "bold"), bg=BG_FIELD, fg=GOLD).pack(anchor="w")
+        tk.Label(info, text="Username: juan\nPassword: password123",
+                 font=("Courier", 9), bg=BG_FIELD, fg=TEXT_MUTED, justify="left").pack(anchor="w")
 
-        tk.Message(
-            info_frame,
-            text="Username: juan\nPassword: password123",
-            font=("Consolas", 10),
-            bg=BG_ENTRY,
-            fg=TEXT_GRAY,
-            width=320
-        ).pack(anchor="w", padx=12, pady=(0, 10))
+        self.root.bind("<Return>", lambda e: self.login())
+        self.username_entry.focus_set()
 
-    # ---------------- LOGIN LOGIC ----------------
+    # ── Login logic ───────────────────────────────────────────────────────────
     def login(self):
-        username = self.username_entry.get()
+        username = self.username_entry.get().strip()
         password = self.password_entry.get()
 
         if not username or not password:
-            messagebox.showerror("Error", "Please enter username and password!")
+            self.err_label.config(text="Please enter username and password.")
             return
 
         driver = self.driver_manager.get_driver(username, password)
@@ -263,11 +170,10 @@ class DriverLoginWindow:
         if driver:
             if "wallet_balance" not in driver:
                 driver["wallet_balance"] = 0.0
-
             self.logged_in_driver = driver
             self.root.destroy()
         else:
-            messagebox.showerror("Error", "Invalid username or password!")
+            self.err_label.config(text="Invalid username or password.")
 
     def back_to_menu(self):
         self.root.destroy()
@@ -276,4 +182,3 @@ class DriverLoginWindow:
     def run(self):
         self.root.mainloop()
         return self.logged_in_driver
-    

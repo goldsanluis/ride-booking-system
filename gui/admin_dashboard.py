@@ -18,17 +18,18 @@ from services.booking_service import BookingService
 import services.promo_service as promos_svc
 import services.notification_service as notif_svc
 
-BG_DARK  = "#0d0d0d"
-BG_CARD  = "#1a1a1a"
-BG_FIELD = "#262626"
-GOLD     = "#FFD700"
-GREEN    = "#4ecca3"
-TEAL     = "#00bcd4"
-ORANGE   = "#FFA500"
-WHITE    = "#FFFFFF"
-GRAY     = "#666666"
-RED      = "#FF6B6B"
-PURPLE   = "#c678dd"
+# ── PUP Maroon, Gold & White Design System ────────────────────────────────────
+BG_DARK  = "#1a0000"   # Deep dark maroon background
+BG_CARD  = "#800000"   # Maroon card surface
+BG_FIELD = "#6b0000"   # Input field background
+GOLD     = "#FFD700"   # PUP Gold
+WHITE    = "#FFFFFF"   # White text
+GRAY     = "#ffcccc"   # Muted light for subtitles
+RED      = "#FF6B6B"   # Error/cancel red
+GREEN    = "#90EE90"   # Light green for completed
+TEAL     = "#87CEEB"   # Light blue for scheduled
+ORANGE   = "#FFD700"   # Reuse gold for highlights
+PURPLE   = "#FFD700"   # Reuse gold for drivers stat
 
 # ── Admin credentials (hardcoded for simplicity) ─────────────────────────────
 ADMIN_USERNAME = "admin"
@@ -42,7 +43,7 @@ def is_admin(username: str, password: str) -> bool:
 class AdminDashboard:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("⚙️  Admin Dashboard — Ride Booking System")
+        self.root.title("⚙️  Admin Dashboard — PUP Rides")
         self.root.geometry("1050x680")
         self.root.configure(bg=BG_DARK)
 
@@ -56,18 +57,35 @@ class AdminDashboard:
         self._build_tabs()
         self._show_overview()
 
-    # ── Header ───────────────────────────────────────────────────────────────
+    # ── Header ────────────────────────────────────────────────────────────────
     def _build_header(self):
-        hdr = tk.Frame(self.root, bg="#111", pady=10)
+        hdr = tk.Frame(self.root, bg=BG_CARD, pady=10)
         hdr.pack(fill="x")
-        tk.Label(hdr, text="⚙️  Admin Dashboard",
-                 font=("Helvetica", 16, "bold"), bg="#111", fg=GOLD).pack(side="left", padx=16)
-        tk.Button(hdr, text="🚪 Exit",
+
+        tk.Frame(hdr, bg=BG_DARK, height=6).pack(fill="x", pady=(0, 8))
+
+        title_row = tk.Frame(hdr, bg=BG_CARD)
+        title_row.pack(fill="x", padx=16)
+
+        tk.Label(title_row, text="🎓", font=("Helvetica", 24),
+                 bg=BG_CARD, fg=GOLD).pack(side="left")
+
+        txt = tk.Frame(title_row, bg=BG_CARD)
+        txt.pack(side="left", padx=(10, 0))
+        tk.Label(txt, text="PUP Rides — Admin Dashboard",
+                 font=("Helvetica", 16, "bold"), bg=BG_CARD, fg=GOLD,
+                 justify="left").pack(anchor="w")
+        tk.Label(txt, text="Polytechnic University of the Philippines",
+                 font=("Helvetica", 8), bg=BG_CARD, fg=WHITE).pack(anchor="w")
+
+        tk.Button(title_row, text="🚪 Exit",
                   font=("Helvetica", 10), bg=RED, fg=WHITE, relief="flat",
                   padx=10, pady=4, cursor="hand2",
-                  command=self.root.destroy).pack(side="right", padx=16)
+                  command=self.root.destroy).pack(side="right")
 
-    # ── Tab bar ──────────────────────────────────────────────────────────────
+        tk.Frame(self.root, bg=GOLD, height=3).pack(fill="x")
+
+    # ── Tab bar ───────────────────────────────────────────────────────────────
     def _build_tabs(self):
         self.tab_bar = tk.Frame(self.root, bg=BG_CARD)
         self.tab_bar.pack(fill="x")
@@ -103,7 +121,7 @@ class AdminDashboard:
             "notify":   self._show_notify,
         }[tab]()
 
-    # ── Overview ─────────────────────────────────────────────────────────────
+    # ── Overview ──────────────────────────────────────────────────────────────
     def _show_overview(self):
         self._switch_style("overview")
         frame = self._scroll_frame()
@@ -119,27 +137,26 @@ class AdminDashboard:
 
         row1 = tk.Frame(frame, bg=BG_DARK); row1.pack(fill="x", padx=16, pady=4)
         row2 = tk.Frame(frame, bg=BG_DARK); row2.pack(fill="x", padx=16, pady=4)
-        self._stat(row1, "👥", "Users",      str(len(accounts)),         TEAL)
-        self._stat(row1, "🚕", "Drivers",    str(len(drivers)),          PURPLE)
-        self._stat(row1, "📋", "Bookings",   str(len(bookings)),         GOLD)
-        self._stat(row2, "✅", "Completed",  str(len(completed)),        GREEN)
-        self._stat(row2, "❌", "Cancelled",  str(len([b for b in bookings if b.status=="Cancelled"])), RED)
-        self._stat(row2, "💰", "Revenue",    f"₱{revenue:,.2f}",         GREEN)
+        self._stat(row1, "👥", "Users",     str(len(accounts)),    TEAL)
+        self._stat(row1, "🚕", "Drivers",   str(len(drivers)),     GOLD)
+        self._stat(row1, "📋", "Bookings",  str(len(bookings)),    GOLD)
+        self._stat(row2, "✅", "Completed", str(len(completed)),   GREEN)
+        self._stat(row2, "❌", "Cancelled", str(len([b for b in bookings if b.status == "Cancelled"])), RED)
+        self._stat(row2, "💰", "Revenue",   f"₱{revenue:,.2f}",   GREEN)
 
-        # Recent bookings
         tk.Label(frame, text="Recent Bookings (last 10)",
-                 font=("Helvetica", 11, "bold"), bg=BG_DARK, fg=ORANGE).pack(anchor="w", padx=16, pady=(16, 4))
+                 font=("Helvetica", 11, "bold"), bg=BG_DARK, fg=GOLD).pack(anchor="w", padx=16, pady=(16, 4))
         recent = sorted(bookings, key=lambda b: b.date, reverse=True)[:10]
         for b in recent:
             c = tk.Frame(frame, bg=BG_CARD, padx=10, pady=6)
             c.pack(fill="x", padx=16, pady=2)
             tk.Label(c, text=f"#{b.booking_id}  {b.user}  {b.start_location}→{b.end_location}",
                      font=("Helvetica", 10), bg=BG_CARD, fg=WHITE).pack(side="left")
-            scol = {"Completed": GREEN, "Cancelled": RED, "Active": ORANGE}.get(b.status, TEAL)
+            scol = {"Completed": GREEN, "Cancelled": RED, "Active": GOLD}.get(b.status, TEAL)
             tk.Label(c, text=f"{b.status}  ₱{b.total_cost:.2f}",
                      font=("Helvetica", 10), bg=BG_CARD, fg=scol).pack(side="right")
 
-    # ── Users ────────────────────────────────────────────────────────────────
+    # ── Users ─────────────────────────────────────────────────────────────────
     def _show_users(self):
         self._switch_style("users")
         frame = self._scroll_frame()
@@ -159,7 +176,6 @@ class AdminDashboard:
             tk.Label(c, text=f"💳 ₱{acc.get('wallet_balance', 0):.2f}",
                      font=("Helvetica", 10), bg=BG_CARD, fg=GREEN).pack(side="right", padx=12)
 
-            # Edit wallet
             def _edit_wallet(a=acc):
                 amt = simpledialog.askfloat("Edit Wallet",
                                             f"Set wallet balance for {a['username']}:",
@@ -176,11 +192,11 @@ class AdminDashboard:
                     self._switch("users")
 
             tk.Button(c, text="✏️ Edit Wallet",
-                      font=("Helvetica", 8), bg=GOLD, fg="#111",
+                      font=("Helvetica", 8), bg=GOLD, fg=BG_DARK,
                       relief="flat", padx=6, pady=2, cursor="hand2",
                       command=_edit_wallet).pack(side="right")
 
-    # ── Bookings ─────────────────────────────────────────────────────────────
+    # ── Bookings ──────────────────────────────────────────────────────────────
     def _show_bookings(self):
         self._switch_style("bookings")
         frame = self._scroll_frame()
@@ -189,7 +205,7 @@ class AdminDashboard:
 
         bookings = sorted(self.svc.get_all_bookings(), key=lambda b: b.date, reverse=True)
         for b in bookings:
-            scol = {"Completed": GREEN, "Cancelled": RED, "Active": ORANGE, "Scheduled": TEAL}.get(b.status, WHITE)
+            scol = {"Completed": GREEN, "Cancelled": RED, "Active": GOLD, "Scheduled": TEAL}.get(b.status, WHITE)
             c = tk.Frame(frame, bg=BG_CARD, padx=10, pady=6)
             c.pack(fill="x", padx=16, pady=2)
             tk.Label(c, text=f"#{b.booking_id}  {b.user}",
@@ -199,7 +215,7 @@ class AdminDashboard:
             tk.Label(c, text=b.status,
                      font=("Helvetica", 9, "bold"), bg=BG_CARD, fg=scol).pack(side="right")
 
-    # ── Drivers ──────────────────────────────────────────────────────────────
+    # ── Drivers ───────────────────────────────────────────────────────────────
     def _show_drivers(self):
         self._switch_style("drivers")
         frame = self._scroll_frame()
@@ -215,19 +231,18 @@ class AdminDashboard:
         for d in drivers:
             c = tk.Frame(frame, bg=BG_CARD, padx=12, pady=8)
             c.pack(fill="x", padx=16, pady=3)
-            tk.Label(c, text=f"🚕 {d['name']}  ({d.get('plate','?')})",
+            tk.Label(c, text=f"🚕 {d['name']}  ({d.get('plate', '?')})",
                      font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=WHITE).pack(side="left")
-            info = f"⭐{d.get('rating',0):.1f}  💰₱{d.get('wallet_balance',0):.2f}"
+            info = f"⭐{d.get('rating', 0):.1f}  💰₱{d.get('wallet_balance', 0):.2f}"
             tk.Label(c, text=info, font=("Helvetica", 10), bg=BG_CARD, fg=GREEN).pack(side="right")
 
-    # ── Promos ───────────────────────────────────────────────────────────────
+    # ── Promos ────────────────────────────────────────────────────────────────
     def _show_promos(self):
         self._switch_style("promos")
         frame = self._scroll_frame()
         tk.Label(frame, text="Promo Code Manager",
                  font=("Helvetica", 13, "bold"), bg=BG_DARK, fg=GOLD).pack(pady=(10, 4))
 
-        # Existing promos
         all_p = promos_svc.get_all_promos()
         extra = promos_svc._load_extra_promos()
 
@@ -237,7 +252,7 @@ class AdminDashboard:
             c.pack(fill="x", padx=16, pady=2)
             tk.Label(c, text=f"🎟️ {code}",
                      font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=GOLD).pack(side="left")
-            detail = f"{info['desc']}  ({info['type']} {info['value']}{'%' if info['type']=='percent' else '₱'})"
+            detail = f"{info['desc']}  ({info['type']} {info['value']}{'%' if info['type'] == 'percent' else '₱'})"
             tk.Label(c, text=detail, font=("Helvetica", 9), bg=BG_CARD, fg=GRAY).pack(side="left", padx=8)
             if is_custom:
                 tk.Button(c, text="🗑 Delete",
@@ -248,18 +263,18 @@ class AdminDashboard:
                 tk.Label(c, text="[built-in]", font=("Helvetica", 8),
                          bg=BG_CARD, fg=GRAY).pack(side="right")
 
-        # Add new promo
         add = tk.Frame(frame, bg=BG_CARD, padx=14, pady=12)
         add.pack(fill="x", padx=16, pady=(12, 0))
         tk.Label(add, text="➕ Add New Promo",
-                 font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=ORANGE).pack(anchor="w", pady=(0, 8))
+                 font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=GOLD).pack(anchor="w", pady=(0, 8))
 
         fields = {}
         for lbl, key, default in [("Code", "code", ""), ("Description", "desc", ""),
                                    ("Type (flat/percent)", "type", "flat"),
                                    ("Value", "value", "10"), ("Min Fare", "min_fare", "0")]:
-            row = tk.Frame(add, bg=BG_CARD); row.pack(fill="x", pady=2)
-            tk.Label(row, text=lbl+":", font=("Helvetica", 9), bg=BG_CARD,
+            row = tk.Frame(add, bg=BG_CARD)
+            row.pack(fill="x", pady=2)
+            tk.Label(row, text=lbl + ":", font=("Helvetica", 9), bg=BG_CARD,
                      fg=GRAY, width=22, anchor="w").pack(side="left")
             e = tk.Entry(row, font=("Helvetica", 10), bg=BG_FIELD, fg=WHITE,
                          insertbackground=GOLD, relief="flat", bd=3)
@@ -282,7 +297,7 @@ class AdminDashboard:
                 messagebox.showerror("Error", str(e), parent=self.root)
 
         tk.Button(add, text="➕ Create Promo",
-                  font=("Helvetica", 10, "bold"), bg=GOLD, fg="#111",
+                  font=("Helvetica", 10, "bold"), bg=GOLD, fg=BG_DARK,
                   relief="flat", padx=12, pady=6, cursor="hand2",
                   command=_add_promo).pack(pady=(8, 0))
 
@@ -291,7 +306,7 @@ class AdminDashboard:
             promos_svc.delete_promo(code)
             self._switch("promos")
 
-    # ── Broadcast notification ────────────────────────────────────────────────
+    # ── Broadcast notification ─────────────────────────────────────────────────
     def _show_notify(self):
         self._switch_style("notify")
         frame = self._scroll_frame()
@@ -306,7 +321,8 @@ class AdminDashboard:
         msg_box.pack(fill="x", padx=16, pady=6)
 
         cat_var = tk.StringVar(value="system")
-        cat_frame = tk.Frame(frame, bg=BG_DARK); cat_frame.pack(anchor="w", padx=16)
+        cat_frame = tk.Frame(frame, bg=BG_DARK)
+        cat_frame.pack(anchor="w", padx=16)
         tk.Label(cat_frame, text="Category:", font=("Helvetica", 9),
                  bg=BG_DARK, fg=GRAY).pack(side="left")
         for cat in ["system", "promo", "ride"]:
@@ -325,13 +341,12 @@ class AdminDashboard:
             msg_box.delete("1.0", tk.END)
 
         tk.Button(frame, text="📢 Send to All Users",
-                  font=("Helvetica", 11, "bold"), bg=ORANGE, fg="#111",
+                  font=("Helvetica", 11, "bold"), bg=GOLD, fg=BG_DARK,
                   relief="flat", padx=16, pady=8, cursor="hand2",
                   command=_send).pack(pady=10)
 
-        # History of recent broadcasts
         tk.Label(frame, text="Recent Broadcasts",
-                 font=("Helvetica", 11, "bold"), bg=BG_DARK, fg=ORANGE).pack(anchor="w", padx=16, pady=(12, 4))
+                 font=("Helvetica", 11, "bold"), bg=BG_DARK, fg=GOLD).pack(anchor="w", padx=16, pady=(12, 4))
         notifs = notif_svc._load()
         system_notifs = [n for n in notifs if n.get("category") in ("system", "promo")][-10:]
         for n in reversed(system_notifs):
@@ -342,7 +357,7 @@ class AdminDashboard:
             tk.Label(c, text=n.get("timestamp", "")[:16],
                      font=("Helvetica", 8), bg=BG_CARD, fg=GRAY).pack(side="right")
 
-    # ── Helpers ──────────────────────────────────────────────────────────────
+    # ── Helpers ───────────────────────────────────────────────────────────────
     def _stat(self, parent, icon, label, value, color=GOLD):
         f = tk.Frame(parent, bg=BG_CARD, padx=14, pady=12)
         f.pack(side="left", expand=True, fill="x", padx=5)
