@@ -13,7 +13,7 @@ from tkinter import messagebox
 from file_handler.account_manager import AccountManager
 from models.account import Account
 
-
+# ── COLOR PALETTE ─────────────────────────────────────────────────────────────
 BG_APP      = "#1a0000"
 BG_SURFACE  = "#800000"
 BG_FIELD    = "#6b0000"
@@ -28,6 +28,7 @@ DIVIDER     = "#990000"
 
 
 class LoginWindow:
+    
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("PUP Rides — Login")
@@ -42,6 +43,12 @@ class LoginWindow:
         self._show_reg_pw   = False
 
         self._setup_ui()
+
+    def _back_to_menu(self):
+        self.root.destroy()
+        # Kept local to prevent circular import issues
+        from gui.main_menu import MainMenu
+        MainMenu().run()
 
     # ── UI ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +81,10 @@ class LoginWindow:
         self.card.pack(fill="both", expand=True, padx=20, pady=18)
 
         self._show_login()
+        tk.Button(self.card, text="← Back to Menu",
+                  font=("Helvetica", 10), bg=BG_SURFACE, fg=GOLD_DIM,
+                  relief="flat", cursor="hand2",
+                  command=self._back_to_menu).pack(pady=(5, 0))
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -263,4 +274,3 @@ class LoginWindow:
     def run(self):
         self.root.mainloop()
         return self.logged_in_account
-    
