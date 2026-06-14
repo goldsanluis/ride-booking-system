@@ -64,19 +64,45 @@ class NotificationCenter:
         tk.Frame(self.win, bg=GOLD, height=3).pack(fill="x")
 
         # Filter row
+        # Filter row
         filt = tk.Frame(self.win, bg=BG_SURFACE, pady=6, padx=10)
         filt.pack(fill="x")
-        tk.Label(filt, text="Filter:", font=("Helvetica", 9, "bold"),
-                 bg=BG_SURFACE, fg=GOLD).pack(side="left")
-        self.filter_var = tk.StringVar(value="All")
+
+        tk.Label(
+            filt,
+            text="Filter:",
+            font=("Helvetica", 9, "bold"),
+            bg=BG_SURFACE,
+            fg=GOLD
+        ).pack(side="left")
+
+        # Active filter
+        self.filter_var = "All"
+
+        # Store button references
+        self.filter_buttons = {}
+
         for cat in ["All", "ride", "payment", "promo", "driver", "refund", "system"]:
-            icon = ns.CATEGORIES.get(cat, "📌")
-            lbl  = f"{icon} {cat.title()}" if cat != "All" else "All"
-            tk.Radiobutton(filt, text=lbl, variable=self.filter_var, value=cat,
-                           bg=BG_SURFACE, fg=TEXT_WHITE, selectcolor=BG_FIELD,
-                           activebackground=BG_SURFACE, activeforeground=GOLD,
-                           font=("Helvetica", 8),
-                           command=self._load).pack(side="left", padx=4)
+            # Remove icons for cleaner screenshot-like look
+            lbl = cat.title() if cat != "All" else "All"
+
+            btn = tk.Button(
+                filt,
+                text=lbl,
+                bg=BG_SURFACE,
+                fg=GOLD if cat == "All" else TEXT_WHITE,
+                relief="flat",
+                bd=0,
+                highlightthickness=0,
+                activebackground=BG_SURFACE,
+                activeforeground=GOLD,
+                font=("Helvetica", 10),
+                cursor="hand2",
+                command=lambda c=cat: self._set_filter(c)
+            )
+
+            btn.pack(side="left", padx=12)
+            self.filter_buttons[cat] = btn
 
         # Scrollable list
         outer = tk.Frame(self.win, bg=BG_APP)
@@ -92,6 +118,26 @@ class NotificationCenter:
                         lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self.canvas.bind("<Configure>",
                          lambda e: self.canvas.itemconfig(win_id, width=e.width))
+        
+    def _set_filter(self, category):
+        self.filter_var = category
+
+        for cat, btn in self.filter_buttons.items():
+            btn.config(
+                fg=GOLD if cat == category else TEXT_WHITE
+            )
+
+        self._load()    
+    
+    def _set_filter(self, category):
+        self.filter_var = category
+
+        for cat, btn in self.filter_buttons.items():
+            btn.config(
+                fg=GOLD if cat == category else TEXT_WHITE
+            )
+
+        self._load()
 
     def _load(self):
         for w in self.inner.winfo_children():
@@ -100,7 +146,7 @@ class NotificationCenter:
         notifs = ns.get_for_user(self.username)
         notifs = list(reversed(notifs))  # newest first
 
-        cat_filter = self.filter_var.get()
+        cat_filter = self.filter_var
         if cat_filter != "All":
             notifs = [n for n in notifs if n.get("category") == cat_filter]
 
