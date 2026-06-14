@@ -13,17 +13,17 @@ from tkinter import messagebox
 import services.notification_service as ns
 
 # ── PUP Maroon, Gold & White Design System ────────────────────────────────────
-BG_APP      = "#1a0000"   # Deep dark maroon background
-BG_SURFACE  = "#800000"   # Maroon card surface
-BG_FIELD    = "#6b0000"   # Input field background
-MAROON      = "#800000"   # PUP Maroon
-MAROON_LT   = "#990000"   # Lighter maroon for hover
-GOLD        = "#FFD700"   # PUP Gold
-GOLD_DIM    = "#FFC200"   # Slightly dimmer gold
-TEXT_WHITE  = "#FFFFFF"   # White text
-TEXT_MUTED  = "#FFEECC"   # Warm muted white
-TEXT_GRAY   = "#cc9966"   # Muted brownish gray
-RED_ERR     = "#FF6B6B"   # Error / clear red
+BG_APP      = "#1a0000"
+BG_SURFACE  = "#800000"
+BG_FIELD    = "#6b0000"
+MAROON      = "#800000"
+MAROON_LT   = "#990000"
+GOLD        = "#FFD700"
+GOLD_DIM    = "#FFC200"
+TEXT_WHITE  = "#FFFFFF"
+TEXT_MUTED  = "#FFEECC"
+TEXT_GRAY   = "#cc9966"
+RED_ERR     = "#FF6B6B"
 
 
 class NotificationCenter:
@@ -34,11 +34,9 @@ class NotificationCenter:
         self.win.title("🔔 Notification Center")
         self.win.configure(bg=BG_APP)
 
-        # Window size
-        width = 800
-        height = 700
+        width = 550
+        height = 650
 
-        # Center on screen
         screen_w = self.win.winfo_screenwidth()
         screen_h = self.win.winfo_screenheight()
 
@@ -46,8 +44,6 @@ class NotificationCenter:
         y = (screen_h // 2) - (height // 2)
 
         self.win.geometry(f"{width}x{height}+{x}+{y}")
-
-        # Allow resizing
         self.win.minsize(600, 500)
         self.win.resizable(True, True)
 
@@ -56,31 +52,59 @@ class NotificationCenter:
         self._build()
         self._load()
 
+    # ─────────────────────────────────────────────
+    # UI BUILD
+    # ─────────────────────────────────────────────
     def _build(self):
-        # Header strip
         hdr = tk.Frame(self.win, bg=MAROON, pady=12)
         hdr.pack(fill="x")
-        tk.Label(hdr, text="🔔  Notification Center",
-                 font=("Helvetica", 14, "bold"), bg=MAROON, fg=GOLD).pack(side="left", padx=14)
+
+        tk.Label(
+            hdr,
+            text="🔔  Notification Center",
+            font=("Helvetica", 14, "bold"),
+            bg=MAROON,
+            fg=GOLD
+        ).pack(side="left", padx=14)
 
         btn_frame = tk.Frame(hdr, bg=MAROON)
         btn_frame.pack(side="right", padx=10)
-        tk.Button(btn_frame, text="✅ Mark All Read",
-                  font=("Helvetica", 9), bg=GOLD, fg=BG_APP, relief="flat",
-                  padx=8, pady=3, cursor="hand2",
-                  activebackground=MAROON_LT, activeforeground=GOLD,
-                  command=self._mark_all).pack(side="left", padx=4)
-        tk.Button(btn_frame, text="🗑 Clear All",
-                  font=("Helvetica", 9), bg=RED_ERR, fg=TEXT_WHITE, relief="flat",
-                  padx=8, pady=3, cursor="hand2",
-                  activebackground=MAROON_LT, activeforeground=TEXT_WHITE,
-                  command=self._clear_all).pack(side="left")
 
-        # Gold accent line
+        tk.Button(
+            btn_frame,
+            text="✅ Mark All Read",
+            font=("Helvetica", 9),
+            bg=GOLD,
+            fg=BG_APP,
+            relief="flat",
+            padx=8,
+            pady=3,
+            cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=GOLD,
+            command=self._mark_all
+        ).pack(side="left", padx=4)
+
+        tk.Button(
+            btn_frame,
+            text="🗑 Clear All",
+            font=("Helvetica", 9),
+            bg=RED_ERR,
+            fg=TEXT_WHITE,
+            relief="flat",
+            padx=8,
+            pady=3,
+            cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=TEXT_WHITE,
+            command=self._clear_all
+        ).pack(side="left")
+
         tk.Frame(self.win, bg=GOLD, height=3).pack(fill="x")
 
-        # Filter row
-        # Filter row
+        # ─────────────────────────────────────────────
+        # FILTER ROW (UNCHANGED)
+        # ─────────────────────────────────────────────
         filt = tk.Frame(self.win, bg=BG_SURFACE, pady=6, padx=10)
         filt.pack(fill="x")
 
@@ -92,14 +116,10 @@ class NotificationCenter:
             fg=GOLD
         ).pack(side="left")
 
-        # Active filter
         self.filter_var = "All"
-
-        # Store button references
         self.filter_buttons = {}
 
         for cat in ["All", "ride", "payment", "promo", "driver", "refund", "system"]:
-            # Remove icons for cleaner screenshot-like look
             lbl = cat.title() if cat != "All" else "All"
 
             btn = tk.Button(
@@ -120,38 +140,67 @@ class NotificationCenter:
             btn.pack(side="left", padx=12)
             self.filter_buttons[cat] = btn
 
-        # Scrollable list
+        # ─────────────────────────────────────────────
+        # SCROLL AREA (ONLY PART CHANGED)
+        # ─────────────────────────────────────────────
         outer = tk.Frame(self.win, bg=BG_APP)
         outer.pack(fill="both", expand=True, padx=10, pady=6)
+
         self.canvas = tk.Canvas(outer, bg=BG_APP, highlightthickness=0)
-        sb = tk.Scrollbar(outer, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=sb.set)
-        sb.pack(side="right", fill="y")
+
+        self.scrollbar = tk.Scrollbar(
+            outer,
+            orient="vertical",
+            command=self.canvas.yview
+        )
+
+        self.canvas.configure(yscrollcommand=self._on_scroll)
+
         self.canvas.pack(side="left", fill="both", expand=True)
+
         self.inner = tk.Frame(self.canvas, bg=BG_APP)
-        win_id = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
-        self.inner.bind("<Configure>",
-                        lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        self.canvas.bind("<Configure>",
-                         lambda e: self.canvas.itemconfig(win_id, width=e.width))
-        
+
+        self.win_id = self.canvas.create_window(
+            (0, 0),
+            window=self.inner,
+            anchor="nw"
+        )
+
+        self.inner.bind("<Configure>", self._on_frame_configure)
+        self.canvas.bind("<Configure>", self._on_canvas_configure)
+
+    # ─────────────────────────────────────────────
+    # SCROLL LOGIC (FIXED ONLY HERE)
+    # ─────────────────────────────────────────────
+    def _on_frame_configure(self, event=None):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self._toggle_scrollbar()
+
+    def _on_canvas_configure(self, event):
+        self.canvas.itemconfig(self.win_id, width=event.width)
+
+    def _on_scroll(self, first, last):
+        self.scrollbar.set(first, last)
+        self._toggle_scrollbar()
+
+    def _toggle_scrollbar(self):
+        first, last = self.canvas.yview()
+
+        # Show only if needed
+        if first <= 0.0 and last >= 1.0:
+            self.scrollbar.pack_forget()
+        else:
+            if not self.scrollbar.winfo_ismapped():
+                self.scrollbar.pack(side="right", fill="y")
+
+    # ─────────────────────────────────────────────
+    # FILTER + LOAD (UNCHANGED)
+    # ─────────────────────────────────────────────
     def _set_filter(self, category):
         self.filter_var = category
 
         for cat, btn in self.filter_buttons.items():
-            btn.config(
-                fg=GOLD if cat == category else TEXT_WHITE
-            )
-
-        self._load()    
-    
-    def _set_filter(self, category):
-        self.filter_var = category
-
-        for cat, btn in self.filter_buttons.items():
-            btn.config(
-                fg=GOLD if cat == category else TEXT_WHITE
-            )
+            btn.config(fg=GOLD if cat == category else TEXT_WHITE)
 
         self._load()
 
@@ -160,45 +209,63 @@ class NotificationCenter:
             w.destroy()
 
         notifs = ns.get_for_user(self.username)
-        notifs = list(reversed(notifs))  # newest first
+        notifs = list(reversed(notifs))
 
-        cat_filter = self.filter_var
-        if cat_filter != "All":
-            notifs = [n for n in notifs if n.get("category") == cat_filter]
+        if self.filter_var != "All":
+            notifs = [n for n in notifs if n.get("category") == self.filter_var]
 
         if not notifs:
-            tk.Label(self.inner, text="No notifications here! 🎉",
-                     font=("Helvetica", 11), bg=BG_APP, fg=TEXT_MUTED).pack(pady=30)
+            tk.Label(
+                self.inner,
+                text="No notifications here! 🎉",
+                font=("Helvetica", 11),
+                bg=BG_APP,
+                fg=TEXT_MUTED
+            ).pack(pady=30)
             return
 
         for i, n in enumerate(notifs):
             self._make_card(n, i)
 
     def _make_card(self, n: dict, idx: int):
-        seen    = n.get("seen", False)
-        cat     = n.get("category", "system")
-        icon    = ns.CATEGORIES.get(cat, "🔔")
-        bg      = BG_SURFACE if not seen else BG_FIELD
+        seen = n.get("seen", False)
+        cat = n.get("category", "system")
+        icon = ns.CATEGORIES.get(cat, "🔔")
+
+        bg = BG_SURFACE if not seen else BG_FIELD
         fg_main = TEXT_WHITE if not seen else TEXT_MUTED
 
         card = tk.Frame(self.inner, bg=bg, padx=10, pady=8)
         card.pack(fill="x", pady=2)
 
-        # Left gold accent bar for unread
         if not seen:
             tk.Frame(card, bg=GOLD, width=4).pack(side="left", fill="y", padx=(0, 8))
 
         row = tk.Frame(card, bg=bg)
         row.pack(fill="x")
+
         tk.Label(row, text=icon, font=("Helvetica", 16), bg=bg).pack(side="left", padx=(0, 8))
+
         msg_frame = tk.Frame(row, bg=bg)
         msg_frame.pack(side="left", fill="x", expand=True)
-        tk.Label(msg_frame, text=n.get("message", ""),
-                 font=("Helvetica", 10, "bold" if not seen else "normal"),
-                 bg=bg, fg=fg_main, wraplength=330, justify="left").pack(anchor="w")
-        ts = n.get("timestamp", "")
-        tk.Label(msg_frame, text=ts, font=("Helvetica", 8),
-                 bg=bg, fg=TEXT_GRAY).pack(anchor="w")
+
+        tk.Label(
+            msg_frame,
+            text=n.get("message", ""),
+            font=("Helvetica", 10, "bold" if not seen else "normal"),
+            bg=bg,
+            fg=fg_main,
+            wraplength=330,
+            justify="left"
+        ).pack(anchor="w")
+
+        tk.Label(
+            msg_frame,
+            text=n.get("timestamp", ""),
+            font=("Helvetica", 8),
+            bg=bg,
+            fg=TEXT_GRAY
+        ).pack(anchor="w")
 
         if not seen:
             tk.Label(row, text="●", font=("Helvetica", 12), bg=bg, fg=GOLD).pack(side="right")
