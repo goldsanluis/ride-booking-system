@@ -87,38 +87,46 @@ class AdminDashboard:
 
     # ── Tab bar ───────────────────────────────────────────────────────────────
     def _build_tabs(self):
-        self.tab_bar = tk.Frame(self.root, bg=BG_CARD, height=50)
+        self.tab_bar = tk.Frame(
+            self.root,
+            bg=BG_CARD,
+            height=50
+        )
         self.tab_bar.pack(fill="x")
 
         tabs = [
-            ("overview", "📊 Overview"),
-            ("users", "👥 Users"),
-            ("bookings", "📋 Bookings"),
-            ("drivers", "🚕 Drivers"),
-            ("promos", "🎟️ Promos"),
-            ("notify", "🔔 Broadcast")
+            ("overview", "📊  Overview"),
+            ("users", "👥  Users"),
+            ("bookings", "📋  Bookings"),
+            ("drivers", "🚖  Drivers"),
+            ("promos", "🎟️  Promos"),
+            ("notify", "🔔  Broadcast")
         ]
 
         self.tab_btns = {}
 
         for key, label in tabs:
+
             btn = tk.Button(
                 self.tab_bar,
                 text=label,
-                font=("Helvetica", 10, "bold"),
+                font=("Segoe UI Emoji", 10, "bold"),
+                width=14,                # Same width for all tabs
+                anchor="center",         # Center text and icon
+                justify="center",
+                relief="flat",
+                bd=0,
                 bg=BG_CARD,
                 fg=GRAY,
                 activebackground=BG_CARD,
                 activeforeground=WHITE,
-                relief="flat",
-                bd=0,
-                padx=20,
-                pady=12,
+                padx=10,
+                pady=10,
                 cursor="hand2",
                 command=lambda k=key: self._switch(k)
             )
 
-            btn.pack(side="left")
+            btn.pack(side="left", fill="y")
             self.tab_btns[key] = btn
 
         # Active tab underline
@@ -128,11 +136,17 @@ class AdminDashboard:
             height=3
         )
 
-        self.content = tk.Frame(self.root, bg=BG_DARK)
+        self.content = tk.Frame(
+            self.root,
+            bg=BG_DARK
+        )
         self.content.pack(fill="both", expand=True)
 
         # Set initial active tab
-        self.root.after(100, lambda: self._switch_style("overview"))
+        self.root.after(
+            100,
+            lambda: self._switch_style("overview")
+        )
 
     def _switch(self, tab):
 
@@ -205,8 +219,8 @@ class AdminDashboard:
         completed = [b for b in bookings if b.status == "Completed"]
         revenue   = sum(b.total_cost for b in completed)
 
-        row1 = tk.Frame(frame, bg=BG_DARK); row1.pack(fill="x", padx=16, pady=4)
-        row2 = tk.Frame(frame, bg=BG_DARK); row2.pack(fill="x", padx=16, pady=4)
+        row1 = tk.Frame(frame, bg=BG_DARK); row1.pack(fill="x", padx=16, pady=8)
+        row2 = tk.Frame(frame, bg=BG_DARK); row2.pack(fill="x", padx=16, pady=8)
         self._stat(row1, "👥", "Users",     str(len(accounts)),    TEAL)
         self._stat(row1, "🚕", "Drivers",   str(len(drivers)),     GOLD)
         self._stat(row1, "📋", "Bookings",  str(len(bookings)),    GOLD)
@@ -429,11 +443,45 @@ class AdminDashboard:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def _stat(self, parent, icon, label, value, color=GOLD):
-        f = tk.Frame(parent, bg=BG_CARD, padx=14, pady=12)
-        f.pack(side="left", expand=True, fill="x", padx=5)
-        tk.Label(f, text=icon, font=("Helvetica", 18), bg=BG_CARD).pack()
-        tk.Label(f, text=value, font=("Helvetica", 15, "bold"), bg=BG_CARD, fg=color).pack()
-        tk.Label(f, text=label, font=("Helvetica", 8), bg=BG_CARD, fg=GRAY).pack()
+        card = tk.Frame(
+            parent,
+            bg=BG_CARD,
+            width=250,
+            height=130,
+            padx=10,
+            pady=10
+        )
+
+        card.pack(side="left", expand=True, fill="both", padx=6)
+        card.pack_propagate(False)
+
+        card.grid_rowconfigure(0, weight=1)
+        card.grid_rowconfigure(1, weight=1)
+        card.grid_rowconfigure(2, weight=1)
+        card.grid_columnconfigure(0, weight=1)
+
+        tk.Label(
+            card,
+            text=icon,
+            font=("Segoe UI Emoji", 22),
+            bg=BG_CARD
+        ).grid(row=0, column=0)
+
+        tk.Label(
+            card,
+            text=value,
+            font=("Helvetica", 18, "bold"),
+            fg=color,
+            bg=BG_CARD
+        ).grid(row=1, column=0)
+
+        tk.Label(
+            card,
+            text=label,
+            font=("Helvetica", 10),
+            fg=GRAY,
+            bg=BG_CARD
+        ).grid(row=2, column=0)
 
     def _scroll_frame(self):
         canvas = tk.Canvas(self.content, bg=BG_DARK, highlightthickness=0)
