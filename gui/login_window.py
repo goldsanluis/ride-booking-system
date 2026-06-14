@@ -31,7 +31,7 @@ class LoginWindow:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("PUP Rides — Login")
-        self.root.geometry("420x600")
+        self.root.geometry("420x720")
         self.root.configure(bg=BG_APP)
         self.root.resizable(False, False)
 
