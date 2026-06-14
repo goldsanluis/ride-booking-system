@@ -13,15 +13,19 @@ import tkinter as tk
 from tkinter import messagebox
 from services.tracking_service import RideTracker, get_eta_minutes
 
-BG_DARK  = "#0d1117"
-BG_CARD  = "#161b22"
-GOLD     = "#FFD700"
-GREEN    = "#4ecca3"
-TEAL     = "#00bcd4"
-ORANGE   = "#FFA500"
-WHITE    = "#FFFFFF"
-GRAY     = "#8b949e"
-RED      = "#FF6B6B"
+# ── PUP Maroon, Gold & White Design System ────────────────────────────────────
+BG_APP      = "#1a0000"   # Deep dark maroon background
+BG_SURFACE  = "#800000"   # Maroon card surface
+BG_FIELD    = "#6b0000"   # Input field background
+MAROON      = "#800000"   # PUP Maroon
+MAROON_LT   = "#990000"   # Lighter maroon for hover
+GOLD        = "#FFD700"   # PUP Gold
+GOLD_DIM    = "#FFC200"   # Slightly dimmer gold
+TEXT_WHITE  = "#FFFFFF"   # White text
+TEXT_MUTED  = "#FFEECC"   # Warm muted white
+TEXT_GRAY   = "#cc9966"   # Muted brownish gray
+RED_ERR     = "#FF6B6B"   # Error / cancel red
+MAP_BG      = "#3a0000"   # Slightly lighter maroon for map area
 
 
 class TrackingWindow:
@@ -33,7 +37,7 @@ class TrackingWindow:
         self.win = tk.Toplevel(parent)
         self.win.title(f"Live Tracking — Booking #{booking.booking_id}")
         self.win.geometry("480x520")
-        self.win.configure(bg=BG_DARK)
+        self.win.configure(bg=BG_APP)
         self.win.resizable(False, False)
         self.win.protocol("WM_DELETE_WINDOW", self._on_close)
 
@@ -42,71 +46,80 @@ class TrackingWindow:
 
     # ── UI ──────────────────────────────────────────────────────────────────
     def _build(self):
-        # Header
-        hdr = tk.Frame(self.win, bg=BG_CARD, pady=12)
+        # Header strip
+        hdr = tk.Frame(self.win, bg=MAROON, pady=12)
         hdr.pack(fill="x")
         tk.Label(hdr, text="📍 Live Ride Tracking",
-                 font=("Helvetica", 14, "bold"), bg=BG_CARD, fg=GOLD).pack()
+                 font=("Helvetica", 14, "bold"), bg=MAROON, fg=GOLD).pack()
         tk.Label(hdr, text=f"Booking #{self.booking.booking_id}",
-                 font=("Helvetica", 10), bg=BG_CARD, fg=GRAY).pack()
+                 font=("Helvetica", 10), bg=MAROON, fg=TEXT_MUTED).pack()
 
-        # Map placeholder (animated dots)
-        map_frame = tk.Frame(self.win, bg="#0d2137", height=140)
+        # Gold accent line
+        tk.Frame(self.win, bg=GOLD, height=3).pack(fill="x")
+
+        # Map placeholder (animated)
+        map_frame = tk.Frame(self.win, bg=MAP_BG, height=140)
         map_frame.pack(fill="x", padx=16, pady=(14, 0))
         map_frame.pack_propagate(False)
-        self.map_canvas = tk.Canvas(map_frame, bg="#0d2137", highlightthickness=0)
+        self.map_canvas = tk.Canvas(map_frame, bg=MAP_BG, highlightthickness=0)
         self.map_canvas.pack(fill="both", expand=True)
         self._draw_route_map()
 
         # Stage label
-        stage_frame = tk.Frame(self.win, bg=BG_DARK, pady=8)
+        stage_frame = tk.Frame(self.win, bg=BG_APP, pady=8)
         stage_frame.pack(fill="x", padx=16)
         self.stage_label = tk.Label(stage_frame, text="🔍 Starting...",
-                                    font=("Helvetica", 13, "bold"), bg=BG_DARK, fg=WHITE)
+                                    font=("Helvetica", 13, "bold"), bg=BG_APP, fg=TEXT_WHITE)
         self.stage_label.pack()
 
         # Progress bar
-        pb_frame = tk.Frame(self.win, bg=BG_DARK, padx=16)
+        pb_frame = tk.Frame(self.win, bg=BG_APP, padx=16)
         pb_frame.pack(fill="x")
-        self.pb_outer = tk.Frame(pb_frame, bg="#21262d", height=12)
+        self.pb_outer = tk.Frame(pb_frame, bg=BG_FIELD, height=12)
         self.pb_outer.pack(fill="x")
         self.pb_outer.pack_propagate(False)
-        self.pb_inner = tk.Frame(self.pb_outer, bg=TEAL, height=12)
+        self.pb_inner = tk.Frame(self.pb_outer, bg=GOLD, height=12)
         self.pb_inner.place(relwidth=0.0, relheight=1.0)
 
-        # ETA
-        eta_frame = tk.Frame(self.win, bg=BG_DARK, pady=4)
+        # ETA row
+        eta_frame = tk.Frame(self.win, bg=BG_APP, pady=4)
         eta_frame.pack(fill="x", padx=16)
         eta_mins = get_eta_minutes(self.booking.distance)
         self.eta_label = tk.Label(eta_frame, text=f"⏱ ETA: ~{eta_mins} min",
-                                  font=("Helvetica", 10), bg=BG_DARK, fg=ORANGE)
+                                  font=("Helvetica", 10), bg=BG_APP, fg=GOLD_DIM)
         self.eta_label.pack(side="left")
         self.pct_label = tk.Label(eta_frame, text="0%",
-                                  font=("Helvetica", 10), bg=BG_DARK, fg=GRAY)
+                                  font=("Helvetica", 10), bg=BG_APP, fg=TEXT_GRAY)
         self.pct_label.pack(side="right")
 
         # Driver info card
-        info = tk.Frame(self.win, bg=BG_CARD, padx=16, pady=12)
+        info = tk.Frame(self.win, bg=BG_SURFACE, padx=16, pady=12)
         info.pack(fill="x", padx=16, pady=12)
+
+        # Gold top border on card
+        tk.Frame(info, bg=GOLD, height=2).pack(fill="x", pady=(0, 8))
+
         tk.Label(info, text="🚗 Your Driver",
-                 font=("Helvetica", 10, "bold"), bg=BG_CARD, fg=GOLD).pack(anchor="w")
+                 font=("Helvetica", 10, "bold"), bg=BG_SURFACE, fg=GOLD).pack(anchor="w")
         tk.Label(info, text=self.booking.driver.name,
-                 font=("Helvetica", 12, "bold"), bg=BG_CARD, fg=WHITE).pack(anchor="w")
+                 font=("Helvetica", 12, "bold"), bg=BG_SURFACE, fg=TEXT_WHITE).pack(anchor="w")
         tk.Label(info, text=f"🔢 {self.booking.driver.plate}  ⭐ {self.booking.driver.rating}",
-                 font=("Helvetica", 10), bg=BG_CARD, fg=GRAY).pack(anchor="w")
+                 font=("Helvetica", 10), bg=BG_SURFACE, fg=TEXT_MUTED).pack(anchor="w")
         tk.Label(info, text=f"📍 {self.booking.start_location} → {self.booking.end_location}",
-                 font=("Helvetica", 10), bg=BG_CARD, fg=TEAL).pack(anchor="w", pady=(4, 0))
+                 font=("Helvetica", 10), bg=BG_SURFACE, fg=GOLD_DIM).pack(anchor="w", pady=(4, 0))
 
         # Buttons
-        btn_row = tk.Frame(self.win, bg=BG_DARK)
+        btn_row = tk.Frame(self.win, bg=BG_APP)
         btn_row.pack(fill="x", padx=16, pady=8)
         tk.Button(btn_row, text="📞 Call Driver (simulated)",
-                  font=("Helvetica", 9), bg=BG_CARD, fg=GREEN,
+                  font=("Helvetica", 9), bg=BG_SURFACE, fg=GOLD,
                   relief="flat", padx=10, pady=6, cursor="hand2",
+                  activebackground=MAROON_LT, activeforeground=GOLD,
                   command=self._call_driver).pack(side="left", padx=(0, 8))
         self.cancel_btn = tk.Button(btn_row, text="❌ Cancel Ride",
-                                    font=("Helvetica", 9), bg=RED, fg=WHITE,
+                                    font=("Helvetica", 9), bg=RED_ERR, fg=TEXT_WHITE,
                                     relief="flat", padx=10, pady=6, cursor="hand2",
+                                    activebackground=MAROON_LT,
                                     command=self._cancel)
         self.cancel_btn.pack(side="left")
 
@@ -114,14 +127,17 @@ class TrackingWindow:
         c = self.map_canvas
         c.update_idletasks()
         w, h = 448, 130
-        # Road
-        c.create_line(40, h//2, w-40, h//2, fill="#21262d", width=6)
-        # Start dot
-        c.create_oval(32, h//2-10, 52, h//2+10, fill=GREEN, outline="")
-        c.create_text(42, h//2+20, text="A", fill=GREEN, font=("Helvetica", 9, "bold"))
-        # End dot
-        c.create_oval(w-52, h//2-10, w-32, h//2+10, fill=RED, outline="")
-        c.create_text(w-42, h//2+20, text="B", fill=RED, font=("Helvetica", 9, "bold"))
+        # Road line
+        c.create_line(40, h//2, w-40, h//2, fill=BG_FIELD, width=6)
+        # Gold dashed center line
+        for x in range(60, w-60, 20):
+            c.create_line(x, h//2, x+10, h//2, fill=GOLD, width=2)
+        # Start dot (gold)
+        c.create_oval(32, h//2-10, 52, h//2+10, fill=GOLD, outline="")
+        c.create_text(42, h//2+22, text="A", fill=GOLD, font=("Helvetica", 9, "bold"))
+        # End dot (white)
+        c.create_oval(w-52, h//2-10, w-32, h//2+10, fill=TEXT_WHITE, outline="")
+        c.create_text(w-42, h//2+22, text="B", fill=TEXT_WHITE, font=("Helvetica", 9, "bold"))
         # Moving car
         self.car_x = 50
         self.car_obj = c.create_text(self.car_x, h//2-4, text="🚗",
@@ -156,7 +172,7 @@ class TrackingWindow:
         self.stage_label.config(text=text)
         self.pb_inner.place(relwidth=pct / 100)
         self.pct_label.config(text=f"{pct}%")
-        color = GREEN if pct == 100 else TEAL
+        color = TEXT_WHITE if pct == 100 else GOLD
         self.pb_inner.config(bg=color)
 
     def _on_tracking_done(self):

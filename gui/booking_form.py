@@ -14,13 +14,18 @@ from datetime import datetime, timedelta
 
 from services.promo_service import apply_promo, list_promos
 
-BG_DARK     = "#2d1f00"
-BG_FIELD    = "#3d2a00"
-GOLD        = "#FFD700"
-GOLD_ACCENT = "#FFA500"
-GREEN       = "#4ecca3"
-TEXT_WHITE  = "#FFFFFF"
-TEAL        = "#00bcd4"
+# ── PUP Maroon, Gold & White Design System ────────────────────────────────────
+BG_APP      = "#1a0000"   # Deep dark maroon background
+BG_SURFACE  = "#800000"   # Maroon card surface
+BG_FIELD    = "#6b0000"   # Input field background
+MAROON      = "#800000"   # PUP Maroon
+MAROON_LT   = "#990000"   # Lighter maroon for hover
+GOLD        = "#FFD700"   # PUP Gold
+GOLD_DIM    = "#FFC200"   # Slightly dimmer gold
+TEXT_WHITE  = "#FFFFFF"   # White text
+TEXT_MUTED  = "#FFEECC"   # Warm muted white
+RED_ERR     = "#FF6B6B"   # Error red
+DIVIDER     = "#990000"   # Divider line
 
 
 class BookingForm:
@@ -34,7 +39,7 @@ class BookingForm:
         self._promo_applied   = None
         self._scheduled_time  = None
 
-        self.frame = tk.Frame(parent, bg=BG_DARK, padx=10, pady=10)
+        self.frame = tk.Frame(parent, bg=BG_APP, padx=10, pady=10)
         self._build()
 
     def _build(self):
@@ -42,31 +47,35 @@ class BookingForm:
             self.frame,
             text="Book a Ride",
             font=("Helvetica", 16, "bold"),
-            bg=BG_DARK,
+            bg=BG_APP,
             fg=GOLD,
         ).pack(pady=(10, 4))
 
-        fav_outer = tk.Frame(self.frame, bg=BG_FIELD, padx=8, pady=6)
+        tk.Frame(self.frame, bg=GOLD, height=2).pack(fill="x", pady=(0, 8))
+
+        fav_outer = tk.Frame(self.frame, bg=BG_SURFACE, padx=8, pady=6)
         fav_outer.pack(fill="x", pady=(0, 6))
-        fav_top = tk.Frame(fav_outer, bg=BG_FIELD)
+        fav_top = tk.Frame(fav_outer, bg=BG_SURFACE)
         fav_top.pack(fill="x")
         tk.Label(
             fav_top,
             text="⭐ Favorite Routes",
             font=("Helvetica", 10, "bold"),
-            bg=BG_FIELD,
+            bg=BG_SURFACE,
             fg=GOLD,
         ).pack(side="left")
         tk.Button(
             fav_top,
             text="Save Current Route",
             font=("Helvetica", 9),
-            bg="#B8860B",
-            fg=TEXT_WHITE,
+            bg=GOLD,
+            fg=BG_APP,
             relief="flat",
             padx=6,
             pady=2,
             cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=GOLD,
             command=self._save_favorite,
         ).pack(side="right")
 
@@ -79,20 +88,20 @@ class BookingForm:
         )
         self.fav_menu_btn.config(
             font=("Helvetica", 9),
-            bg=BG_DARK,
+            bg=BG_FIELD,
             fg=TEXT_WHITE,
-            activebackground="#B8860B",
+            activebackground=MAROON_LT,
             relief="flat",
             bd=0,
             highlightthickness=0,
         )
-        self.fav_menu_btn["menu"].config(bg=BG_DARK, fg=TEXT_WHITE, font=("Helvetica", 9))
+        self.fav_menu_btn["menu"].config(bg=BG_FIELD, fg=TEXT_WHITE, font=("Helvetica", 9))
         self.fav_menu_btn.pack(fill="x", pady=(4, 0))
         self._refresh_favorites_menu()
 
         self._lbl("Vehicle Type:")
         self.vehicle_var = tk.StringVar(value="Car")
-        vf = tk.Frame(self.frame, bg=BG_DARK)
+        vf = tk.Frame(self.frame, bg=BG_APP)
         vf.pack(fill="x", pady=2)
         for v in ["Car", "Van", "Bike"]:
             tk.Radiobutton(
@@ -100,10 +109,10 @@ class BookingForm:
                 text=v,
                 variable=self.vehicle_var,
                 value=v,
-                bg=BG_DARK,
+                bg=BG_APP,
                 fg=TEXT_WHITE,
-                selectcolor="#B8860B",
-                activebackground=BG_DARK,
+                selectcolor=MAROON_LT,
+                activebackground=BG_APP,
                 activeforeground=GOLD,
                 font=("Helvetica", 11),
                 command=self._update_estimate,
@@ -116,7 +125,7 @@ class BookingForm:
         self.end_entry = self._entry()
 
         self._lbl("Distance (km):")
-        dist_row = tk.Frame(self.frame, bg=BG_DARK)
+        dist_row = tk.Frame(self.frame, bg=BG_APP)
         dist_row.pack(fill="x", pady=2)
         self.distance_entry = tk.Entry(
             dist_row,
@@ -130,30 +139,30 @@ class BookingForm:
         self.distance_entry.pack(side="left", fill="x", expand=True)
         self.distance_entry.bind("<KeyRelease>", lambda e: self._update_estimate())
 
-        est_frame = tk.Frame(self.frame, bg="#1a3300", padx=8, pady=6)
+        est_frame = tk.Frame(self.frame, bg=MAROON_LT, padx=8, pady=6)
         est_frame.pack(fill="x", pady=(8, 0))
         tk.Label(
             est_frame,
             text="💡 Fare Estimator",
             font=("Helvetica", 10, "bold"),
-            bg="#1a3300",
-            fg=GREEN,
+            bg=MAROON_LT,
+            fg=GOLD,
         ).pack(anchor="w")
         self.estimate_label = tk.Label(
             est_frame,
             text="Enter distance to see estimate",
             font=("Helvetica", 10),
-            bg="#1a3300",
+            bg=MAROON_LT,
             fg=TEXT_WHITE,
         )
         self.estimate_label.pack(anchor="w")
         self.surge_label = tk.Label(
-            est_frame, text="", font=("Helvetica", 9, "italic"), bg="#1a3300", fg=GOLD_ACCENT
+            est_frame, text="", font=("Helvetica", 9, "italic"), bg=MAROON_LT, fg=GOLD_DIM
         )
         self.surge_label.pack(anchor="w")
 
         self._lbl("Passengers:")
-        pax_frame = tk.Frame(self.frame, bg=BG_DARK)
+        pax_frame = tk.Frame(self.frame, bg=BG_APP)
         pax_frame.pack(fill="x", pady=2)
         self.passengers_var = tk.IntVar(value=1)
         for n in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
@@ -162,10 +171,10 @@ class BookingForm:
                 text=str(n),
                 variable=self.passengers_var,
                 value=n,
-                bg=BG_DARK,
+                bg=BG_APP,
                 fg=TEXT_WHITE,
-                selectcolor="#B8860B",
-                activebackground=BG_DARK,
+                selectcolor=MAROON_LT,
+                activebackground=BG_APP,
                 activeforeground=GOLD,
                 font=("Helvetica", 10),
             ).pack(side="left", padx=2)
@@ -184,36 +193,38 @@ class BookingForm:
         )
         self.notes_text.pack(fill="x", pady=2)
 
-        promo_outer = tk.Frame(self.frame, bg=BG_FIELD, padx=8, pady=6)
+        promo_outer = tk.Frame(self.frame, bg=BG_SURFACE, padx=8, pady=6)
         promo_outer.pack(fill="x", pady=(8, 0))
-        promo_top = tk.Frame(promo_outer, bg=BG_FIELD)
+        promo_top = tk.Frame(promo_outer, bg=BG_SURFACE)
         promo_top.pack(fill="x")
         tk.Label(
             promo_top,
             text="🎟️ Promo Code:",
             font=("Helvetica", 10, "bold"),
-            bg=BG_FIELD,
+            bg=BG_SURFACE,
             fg=GOLD,
         ).pack(side="left")
         tk.Button(
             promo_top,
             text="View Promos",
             font=("Helvetica", 9),
-            bg="#B8860B",
-            fg=TEXT_WHITE,
+            bg=GOLD,
+            fg=BG_APP,
             relief="flat",
             padx=6,
             pady=2,
             cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=GOLD,
             command=self._show_promos,
         ).pack(side="right")
 
-        promo_row = tk.Frame(promo_outer, bg=BG_FIELD)
+        promo_row = tk.Frame(promo_outer, bg=BG_SURFACE)
         promo_row.pack(fill="x", pady=4)
         self.promo_entry = tk.Entry(
             promo_row,
             font=("Helvetica", 11),
-            bg="#2d1f00",
+            bg=BG_FIELD,
             fg=TEXT_WHITE,
             insertbackground=GOLD,
             relief="flat",
@@ -225,46 +236,50 @@ class BookingForm:
             text="Apply",
             font=("Helvetica", 10, "bold"),
             bg=GOLD,
-            fg="#1a1200",
+            fg=BG_APP,
             relief="flat",
             padx=10,
             cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=GOLD,
             command=self._apply_promo,
         ).pack(side="left", padx=(6, 0))
-        self.promo_label = tk.Label(promo_outer, text="", font=("Helvetica", 9), bg=BG_FIELD, fg=GREEN)
+        self.promo_label = tk.Label(promo_outer, text="", font=("Helvetica", 9), bg=BG_SURFACE, fg=GOLD_DIM)
         self.promo_label.pack(anchor="w")
 
-        sched_outer = tk.Frame(self.frame, bg="#002233", padx=8, pady=6)
+        sched_outer = tk.Frame(self.frame, bg=MAROON, padx=8, pady=6)
         sched_outer.pack(fill="x", pady=(8, 0))
-        sched_top = tk.Frame(sched_outer, bg="#002233")
+        sched_top = tk.Frame(sched_outer, bg=MAROON)
         sched_top.pack(fill="x")
         tk.Label(
             sched_top,
             text="🗓️ Schedule Ride (optional)",
             font=("Helvetica", 10, "bold"),
-            bg="#002233",
-            fg=TEAL,
+            bg=MAROON,
+            fg=GOLD,
         ).pack(side="left")
         tk.Button(
             sched_top,
             text="Clear",
             font=("Helvetica", 9),
-            bg="#003344",
+            bg=BG_FIELD,
             fg=TEXT_WHITE,
             relief="flat",
             padx=6,
             cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=GOLD,
             command=self._clear_schedule,
         ).pack(side="right")
 
-        sched_row = tk.Frame(sched_outer, bg="#002233")
+        sched_row = tk.Frame(sched_outer, bg=MAROON)
         sched_row.pack(fill="x", pady=4)
         tk.Label(
             sched_row,
             text="Date (YYYY-MM-DD):",
             font=("Helvetica", 9),
-            bg="#002233",
-            fg=TEXT_WHITE,
+            bg=MAROON,
+            fg=TEXT_MUTED,
         ).pack(side="left")
         self.sched_date = tk.Entry(
             sched_row,
@@ -283,8 +298,8 @@ class BookingForm:
             sched_row,
             text="Time (HH:MM):",
             font=("Helvetica", 9),
-            bg="#002233",
-            fg=TEXT_WHITE,
+            bg=MAROON,
+            fg=TEXT_MUTED,
         ).pack(side="left")
         self.sched_time = tk.Entry(
             sched_row,
@@ -304,34 +319,34 @@ class BookingForm:
             sched_outer,
             text="Enable scheduled booking",
             variable=self.sched_enable,
-            bg="#002233",
+            bg=MAROON,
             fg=TEXT_WHITE,
-            selectcolor="#003344",
-            activebackground="#002233",
-            activeforeground=TEAL,
+            selectcolor=BG_FIELD,
+            activebackground=MAROON,
+            activeforeground=GOLD,
             font=("Helvetica", 9),
         ).pack(anchor="w")
 
-        self.sched_status = tk.Label(sched_outer, text="", font=("Helvetica", 9, "italic"), bg="#002233", fg=TEAL)
+        self.sched_status = tk.Label(sched_outer, text="", font=("Helvetica", 9, "italic"), bg=MAROON, fg=GOLD_DIM)
         self.sched_status.pack(anchor="w")
 
-        pf = tk.Frame(self.frame, bg="#3d2a00", padx=8, pady=6)
+        pf = tk.Frame(self.frame, bg=BG_SURFACE, padx=8, pady=6)
         pf.pack(fill="x", pady=8)
-        tk.Label(pf, text="💰 Pricing Info", font=("Helvetica", 10, "bold"), bg="#3d2a00", fg=GOLD).pack(anchor="w")
+        tk.Label(pf, text="💰 Pricing Info", font=("Helvetica", 10, "bold"), bg=BG_SURFACE, fg=GOLD).pack(anchor="w")
         for t in [
             "🚗 Car: P40 base + P14/km (cap 4)",
             "🚐 Van: P80 base + P20/km (cap 10)",
             "🏍️ Bike: P20 base + P8/km (cap 1)",
             "🚀 Surge: 1.5x (7-9 AM, 5-8 PM)",
         ]:
-            tk.Label(pf, text=t, font=("Helvetica", 9), bg="#3d2a00", fg=GOLD_ACCENT).pack(anchor="w")
+            tk.Label(pf, text=t, font=("Helvetica", 9), bg=BG_SURFACE, fg=TEXT_MUTED).pack(anchor="w")
 
         # Payment method selector
-        pm_frame = tk.Frame(self.frame, bg="#002233", padx=8, pady=6)
+        pm_frame = tk.Frame(self.frame, bg=MAROON, padx=8, pady=6)
         pm_frame.pack(fill="x", pady=(8, 0))
-        pm_top = tk.Frame(pm_frame, bg="#002233")
+        pm_top = tk.Frame(pm_frame, bg=MAROON)
         pm_top.pack(fill="x")
-        tk.Label(pm_top, text="💳 Payment Method:", font=("Helvetica", 10, "bold"), bg="#002233", fg="#4ecca3").pack(
+        tk.Label(pm_top, text="💳 Payment Method:", font=("Helvetica", 10, "bold"), bg=MAROON, fg=GOLD).pack(
             side="left"
         )
 
@@ -343,34 +358,38 @@ class BookingForm:
         default_m = ps.get_default(self.account.username)
         self.payment_var.set(default_m.get("label", "Ride Wallet"))
         pm_menu = tk.OptionMenu(pm_frame, self.payment_var, *[m["label"] for m in methods])
-        pm_menu.config(font=("Helvetica", 9), bg="#3d2a00", fg="white", relief="flat", bd=0, highlightthickness=0)
-        pm_menu["menu"].config(bg="#3d2a00", fg="white", font=("Helvetica", 9))
+        pm_menu.config(font=("Helvetica", 9), bg=BG_FIELD, fg=TEXT_WHITE, relief="flat", bd=0, highlightthickness=0,
+                       activebackground=MAROON_LT)
+        pm_menu["menu"].config(bg=BG_FIELD, fg=TEXT_WHITE, font=("Helvetica", 9))
         pm_menu.pack(fill="x", pady=4)
 
         self.wallet_label = tk.Label(
             self.frame,
             text=f"💳 Wallet Balance: P{self.account.wallet_balance:.2f}",
             font=("Helvetica", 11, "bold"),
-            bg=BG_DARK,
-            fg=GREEN,
+            bg=BG_APP,
+            fg=GOLD,
         )
         self.wallet_label.pack(pady=5)
 
+        tk.Frame(self.frame, bg=GOLD, height=2).pack(fill="x", pady=(4, 0))
         tk.Button(
             self.frame,
             text="Book Ride 🚗",
             font=("Helvetica", 12, "bold"),
             bg=GOLD,
-            fg="#1a1200",
+            fg=BG_APP,
             relief="flat",
             padx=10,
-            pady=8,
+            pady=10,
             cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=GOLD,
             command=self.book_ride,
         ).pack(pady=10, fill="x")
 
     def _lbl(self, text):
-        tk.Label(self.frame, text=text, font=("Helvetica", 11), bg=BG_DARK, fg=GOLD_ACCENT).pack(anchor="w", pady=2)
+        tk.Label(self.frame, text=text, font=("Helvetica", 11), bg=BG_APP, fg=GOLD_DIM).pack(anchor="w", pady=2)
 
     def _entry(self):
         e = tk.Entry(self.frame, font=("Helvetica", 11), bg=BG_FIELD, fg=TEXT_WHITE, insertbackground=GOLD, relief="flat", bd=5)
@@ -429,13 +448,13 @@ class BookingForm:
 
         discount, desc, err = apply_promo(code, fare)
         if err:
-            self.promo_label.config(text=f"❌ {err}", fg="#FF6B6B")
+            self.promo_label.config(text=f"❌ {err}", fg=RED_ERR)
             self._discount = 0.0
             self._promo_applied = None
         else:
             self._discount = discount
             self._promo_applied = code.upper()
-            self.promo_label.config(text=f"✅ {code.upper()} applied: {desc} (-P{discount:.2f})", fg=GREEN)
+            self.promo_label.config(text=f"✅ {code.upper()} applied: {desc} (-P{discount:.2f})", fg=GOLD)
         self._update_estimate()
 
     def _show_promos(self):
@@ -498,11 +517,11 @@ class BookingForm:
 
         name_win = tk.Toplevel()
         name_win.title("Save Favorite Route")
-        name_win.configure(bg=BG_DARK)
+        name_win.configure(bg=BG_APP)
         name_win.resizable(False, False)
         name_win.grab_set()
 
-        tk.Label(name_win, text="Name this route:", font=("Helvetica", 11), bg=BG_DARK, fg=GOLD).pack(padx=20, pady=(16, 4))
+        tk.Label(name_win, text="Name this route:", font=("Helvetica", 11), bg=BG_APP, fg=GOLD).pack(padx=20, pady=(16, 4))
         name_entry = tk.Entry(
             name_win,
             font=("Helvetica", 11),
@@ -539,11 +558,13 @@ class BookingForm:
             text="Save",
             font=("Helvetica", 11, "bold"),
             bg=GOLD,
-            fg="#1a1200",
+            fg=BG_APP,
             relief="flat",
             padx=16,
             pady=6,
             cursor="hand2",
+            activebackground=MAROON_LT,
+            activeforeground=GOLD,
             command=do_save,
         ).pack(pady=12)
 
@@ -564,7 +585,6 @@ class BookingForm:
             messagebox.showerror("Error", "Passengers must be a valid number.")
             return
 
-        # User input exception handling for booking form
         caps = {"Car": 4, "Van": 10, "Bike": 1}
         if not start or not end:
             messagebox.showerror("Error", "Please fill in start and end locations.")
@@ -601,7 +621,6 @@ class BookingForm:
                 messagebox.showerror("Schedule Error", str(e) if str(e) else "Invalid schedule input.")
                 return
 
-        # Fare computation (defensive)
         base = self._get_base_fare(vehicle_type, distance)
         surge = self._current_surge()
         try:
@@ -648,7 +667,6 @@ class BookingForm:
         notes_txt = f"\n📝 Notes: {notes[:60]}" if notes else ""
         sched_txt = f"\n🗓️ Scheduled: {scheduled_time}" if scheduled_time else ""
 
-        # ── Payment method check (only Ride Wallet supported) ───────────────
         selected_payment_label = self.payment_var.get()
         if selected_payment_label != "Ride Wallet":
             messagebox.showinfo(
@@ -656,7 +674,6 @@ class BookingForm:
                 "Only Ride Wallet is currently supported. Your wallet will be charged.",
             )
 
-        # Driver preview before confirming
         from models.driver import Driver as _Driver
 
         preview_driver = _Driver.get_random_driver()
@@ -679,7 +696,6 @@ class BookingForm:
         if not confirm:
             return
 
-        # Deduct and persist wallet
         self.account.wallet_balance -= est_cost
         self.account_manager.update_account(self.account)
 
@@ -697,9 +713,7 @@ class BookingForm:
         )
         self.service.save_bookings()
 
-        # Notification
         import services.notification_service as notif_svc
-
 
         notif_svc.push(
             self.account.username,
@@ -724,7 +738,6 @@ class BookingForm:
             f"Remaining Balance: P{self.account.wallet_balance:.2f}",
         )
 
-        # Reset form
         self.start_entry.delete(0, tk.END)
         self.end_entry.delete(0, tk.END)
         self.distance_entry.delete(0, tk.END)
@@ -740,4 +753,3 @@ class BookingForm:
         self.surge_label.config(text="")
         self.fav_var.set("— select a favorite —")
         self.refresh_callback()
-
