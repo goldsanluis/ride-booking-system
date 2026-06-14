@@ -486,6 +486,49 @@ class BookingList:
     def _save(self):
         self.service.save_bookings()
 
+    def _export_bookings(self):
+        all_bookings = self.service.get_user_bookings(self.account.username)
+        filtered     = self._filter_bookings(all_bookings)
+
+        if not filtered:
+            messagebox.showinfo("Export", "No bookings to export.")
+            return
+
+        path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+            title="Save Bookings Export"
+        )
+        if not path:
+            return
+
+        lines = [
+            "PUP RIDES — BOOKING EXPORT",
+            f"User: {self.account.username}",
+            "=" * 40,
+            ""
+        ]
+        for b in filtered:
+            lines.append(f"Booking #{b.booking_id}")
+            lines.append(f"  Date     : {b.date}")
+            lines.append(f"  From     : {b.start_location}")
+            lines.append(f"  To       : {b.end_location}")
+            lines.append(f"  Vehicle  : {b.vehicle.name}")
+            lines.append(f"  Driver   : {b.driver.name}")
+            lines.append(f"  Distance : {b.distance} km")
+            lines.append(f"  Fare     : ₱{b.total_cost:.2f}")
+            lines.append(f"  Status   : {b.status}")
+            if b.rating:
+                lines.append(f"  Rating   : {'⭐' * b.rating}")
+            lines.append("-" * 40)
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
+            messagebox.showinfo("Export Successful", f"Bookings exported to:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Export Failed", str(e))
+
     # ════════════════════════════════════════════════════════════════════════
     #  STATS TAB
     # ════════════════════════════════════════════════════════════════════════

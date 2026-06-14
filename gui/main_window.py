@@ -243,7 +243,7 @@ class MainWindow:
         AboutWindow(
             self.root,
             app_name="PUP Rides",
-            app_version="1.0",
+            version="1.0",
             group_members=[
                 "Domingo, Franco Luis",
                 "Gacu, Laiza May M.",
