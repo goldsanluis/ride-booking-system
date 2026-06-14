@@ -32,9 +32,25 @@ class NotificationCenter:
 
         self.win = tk.Toplevel(parent)
         self.win.title("🔔 Notification Center")
-        self.win.geometry("480x560")
         self.win.configure(bg=BG_APP)
-        self.win.resizable(False, True)
+
+        # Window size
+        width = 800
+        height = 700
+
+        # Center on screen
+        screen_w = self.win.winfo_screenwidth()
+        screen_h = self.win.winfo_screenheight()
+
+        x = (screen_w // 2) - (width // 2)
+        y = (screen_h // 2) - (height // 2)
+
+        self.win.geometry(f"{width}x{height}+{x}+{y}")
+
+        # Allow resizing
+        self.win.minsize(600, 500)
+        self.win.resizable(True, True)
+
         self.win.grab_set()
 
         self._build()
