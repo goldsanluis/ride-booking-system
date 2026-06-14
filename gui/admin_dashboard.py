@@ -219,8 +219,8 @@ class AdminDashboard:
         completed = [b for b in bookings if b.status == "Completed"]
         revenue   = sum(b.total_cost for b in completed)
 
-        row1 = tk.Frame(frame, bg=BG_DARK); row1.pack(fill="x", padx=16, pady=8)
-        row2 = tk.Frame(frame, bg=BG_DARK); row2.pack(fill="x", padx=16, pady=8)
+        row1 = tk.Frame(frame, bg=BG_DARK); row1.pack(fill="x", padx=16, pady=6)
+        row2 = tk.Frame(frame, bg=BG_DARK); row2.pack(fill="x", padx=16, pady=6)
         self._stat(row1, "👥", "Users",     str(len(accounts)),    TEAL)
         self._stat(row1, "🚕", "Drivers",   str(len(drivers)),     GOLD)
         self._stat(row1, "📋", "Bookings",  str(len(bookings)),    GOLD)
@@ -255,30 +255,83 @@ class AdminDashboard:
         for acc in accounts:
             c = tk.Frame(frame, bg=BG_CARD, padx=12, pady=8)
             c.pack(fill="x", padx=16, pady=3)
-            tk.Label(c, text=f"👤 {acc['name']}  (@{acc['username']})",
-                     font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=WHITE).pack(side="left")
-            tk.Label(c, text=f"💳 ₱{acc.get('wallet_balance', 0):.2f}",
-                     font=("Helvetica", 10), bg=BG_CARD, fg=GREEN).pack(side="right", padx=12)
+
+            # User info (left side)
+            tk.Label(
+                c,
+                text=f"👤  {acc['name']} (@{acc['username']})",
+                font=("Segoe UI Emoji", 11, "bold"),
+                bg=BG_CARD,
+                fg=WHITE,
+                width=35,
+                anchor="w"
+            ).pack(side="left")
 
             def _edit_wallet(a=acc):
-                amt = simpledialog.askfloat("Edit Wallet",
-                                            f"Set wallet balance for {a['username']}:",
-                                            initialvalue=a.get("wallet_balance", 0.0),
-                                            minvalue=0.0, maxvalue=999999.0,
-                                            parent=self.root)
+                amt = simpledialog.askfloat(
+                    "Edit Wallet",
+                    f"Set wallet balance for {a['username']}:",
+                    initialvalue=a.get("wallet_balance", 0.0),
+                    minvalue=0.0,
+                    maxvalue=999999.0,
+                    parent=self.root
+                )
+
                 if amt is not None:
                     accs = self.am.load_accounts()
+
                     for x in accs:
                         if x["username"] == a["username"]:
                             x["wallet_balance"] = amt
+
                     self.am.save_accounts(accs)
-                    messagebox.showinfo("Updated", f"Balance set to ₱{amt:.2f}")
+
+                    messagebox.showinfo(
+                        "Updated",
+                        f"Balance set to ₱{amt:.2f}"
+                    )
+
                     self._switch("users")
 
-            tk.Button(c, text="✏️ Edit Wallet",
-                      font=("Helvetica", 8), bg=GOLD, fg=BG_DARK,
-                      relief="flat", padx=6, pady=2, cursor="hand2",
-                      command=_edit_wallet).pack(side="right")
+            # Right-side container
+            right_frame = tk.Frame(c, bg=BG_CARD)
+            right_frame.pack(side="right")
+
+            # Edit Wallet button
+        UI_FONT_BTN = ("Helvetica", 10)
+        UI_FONT_LABEL = ("Segoe UI Emoji", 10)
+
+        wallet_container = tk.Frame(right_frame, bg=BG_CARD)
+        wallet_container.pack(side="right", padx=(0, 12), pady=5)
+
+        wallet_container.columnconfigure(0, weight=1)
+        wallet_container.columnconfigure(1, weight=1)
+
+       
+        tk.Button(
+            right_frame,
+            text="✏️ Edit Wallet",
+            font=("Helvetica", 10),
+            bg=GOLD,
+            fg=BG_DARK,
+            relief="flat",
+            padx=10,
+            pady=3,
+            cursor="hand2",
+            command=_edit_wallet
+        ).pack(side="right", padx=(6, 0), pady=5)
+
+
+        # Wallet balance
+        tk.Label(
+            right_frame,
+            text=f"💵 ₱{acc.get('wallet_balance', 0):,.2f}",
+            font=("Segoe UI Emoji", 11),
+            bg=BG_CARD,
+            fg=GREEN,
+            width=16,
+            anchor="e"
+        ).pack(side="right", padx=(0, 12), pady=5)
 
     # ── Bookings ──────────────────────────────────────────────────────────────
     def _show_bookings(self):
@@ -443,45 +496,38 @@ class AdminDashboard:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def _stat(self, parent, icon, label, value, color=GOLD):
-        card = tk.Frame(
+        f = tk.Frame(
             parent,
             bg=BG_CARD,
             width=250,
-            height=130,
-            padx=10,
-            pady=10
+            height=120
         )
 
-        card.pack(side="left", expand=True, fill="both", padx=6)
-        card.pack_propagate(False)
-
-        card.grid_rowconfigure(0, weight=1)
-        card.grid_rowconfigure(1, weight=1)
-        card.grid_rowconfigure(2, weight=1)
-        card.grid_columnconfigure(0, weight=1)
+        f.pack(side="left", expand=True, fill="both", padx=5)
+        f.pack_propagate(False)
 
         tk.Label(
-            card,
+            f,
             text=icon,
-            font=("Segoe UI Emoji", 22),
+            font=("Helvetica", 18),
             bg=BG_CARD
-        ).grid(row=0, column=0)
+        ).pack(pady=(10, 2))
 
         tk.Label(
-            card,
+            f,
             text=value,
-            font=("Helvetica", 18, "bold"),
-            fg=color,
-            bg=BG_CARD
-        ).grid(row=1, column=0)
+            font=("Helvetica", 15, "bold"),
+            bg=BG_CARD,
+            fg=color
+        ).pack()
 
         tk.Label(
-            card,
+            f,
             text=label,
-            font=("Helvetica", 10),
-            fg=GRAY,
-            bg=BG_CARD
-        ).grid(row=2, column=0)
+            font=("Helvetica", 8),
+            bg=BG_CARD,
+            fg=GRAY
+        ).pack()
 
     def _scroll_frame(self):
         canvas = tk.Canvas(self.content, bg=BG_DARK, highlightthickness=0)
