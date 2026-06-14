@@ -13,21 +13,19 @@ from tkinter import messagebox
 from file_handler.account_manager import AccountManager
 from models.account import Account
 
-# ── PUP Maroon & Gold Design System ──────────────────────────────────────────
-BG_APP      = "#1C0A0A"   # Deep maroon-black background
-BG_SURFACE  = "#2A1010"   # Card surface
-BG_FIELD    = "#3A1818"   # Input field background
-BG_FIELD_HV = "#4A2020"   # Input hover
-MAROON      = "#800000"   # PUP Maroon primary
-MAROON_LT   = "#A01515"   # Lighter maroon for hover
-GOLD        = "#C8A951"   # PUP Gold
-GOLD_BRIGHT = "#E8C96B"   # Brighter gold for highlights
-GOLD_DIM    = "#8B7535"   # Dimmer gold for secondary text
-TEXT_WHITE  = "#F5F0E8"   # Warm white
-TEXT_MUTED  = "#7A6060"   # Muted text
+# ── PUP Maroon, Gold & White Design System ───────────────────────────────────
+BG_APP      = "#1a0000"   # Deep dark maroon background
+BG_SURFACE  = "#800000"   # Maroon card surface
+BG_FIELD    = "#6b0000"   # Input field background
+MAROON      = "#800000"   # PUP Maroon
+MAROON_LT   = "#990000"   # Lighter maroon for hover
+GOLD        = "#FFD700"   # PUP Gold
+GOLD_BRIGHT = "#FFD700"   # Gold highlight
+GOLD_DIM    = "#FFD700"   # Gold subtext
+TEXT_WHITE  = "#FFFFFF"   # White text
+TEXT_MUTED  = "#FFFFFF"   # White subtext
 RED_ERR     = "#FF6B6B"   # Error red
-DIVIDER     = "#3D1A1A"   # Divider line
-
+DIVIDER     = "#990000"   # Divider line
 
 class LoginWindow:
     def __init__(self):
@@ -47,23 +45,41 @@ class LoginWindow:
     # ── Layout ────────────────────────────────────────────────────────────────
 
     def _setup_ui(self):
-        # Top brand strip
-        brand = tk.Frame(self.root, bg=MAROON, pady=22)
-        brand.pack(fill="x")
+        # Top brand strip (improved hero header)
+        header = tk.Frame(self.root, bg=MAROON, padx=18, pady=18)
+        header.pack(fill="x")
 
-        tk.Label(brand, text="🎓", font=("Helvetica", 32),
-                 bg=MAROON, fg=GOLD_BRIGHT).pack()
-        tk.Label(brand, text="PUP Rides",
-                 font=("Helvetica", 22, "bold"), bg=MAROON, fg=GOLD_BRIGHT).pack()
-        tk.Label(brand, text="Polytechnic University of the Philippines",
-                 font=("Helvetica", 8), bg=MAROON, fg=GOLD_DIM).pack()
+        # Header accent layers for a more premium look
+        top_glow = tk.Frame(header, bg=BG_APP, height=6)
+        top_glow.pack(fill="x", pady=(0, 10))
+
+        title_row = tk.Frame(header, bg=MAROON)
+        title_row.pack(fill="x")
+
+        tk.Label(title_row, text="🎓", font=("Helvetica", 34),
+                 bg=MAROON, fg=GOLD).pack(side="left")
+
+        txt_wrap = tk.Frame(title_row, bg=MAROON)
+        txt_wrap.pack(side="left", fill="x", expand=True, padx=(14, 0))
+
+        tk.Label(txt_wrap, text="PUP Rides",
+                 font=("Helvetica", 24, "bold"), bg=MAROON, fg=GOLD,
+                 justify="left").pack(anchor="w")
+
+        tk.Label(txt_wrap, text="Ride Booking System",
+                 font=("Helvetica", 10), bg=MAROON, fg=TEXT_MUTED,
+                 justify="left").pack(anchor="w", pady=(4, 0))
+
+        tk.Label(header,
+                 text="Polytechnic University of the Philippines",
+                 font=("Helvetica", 8), bg=MAROON, fg=GOLD_DIM).pack(anchor="w", pady=(10, 0))
 
         # Gold accent line
-        tk.Frame(self.root, bg=GOLD, height=3).pack(fill="x")
+        tk.Frame(self.root, bg=GOLD, height=3).pack(fill="x", pady=(10, 0))
 
-        # Card area
-        self.card = tk.Frame(self.root, bg=BG_SURFACE, padx=32, pady=24)
-        self.card.pack(fill="both", expand=True, padx=24, pady=20)
+        # Card area (cleaner spacing)
+        self.card = tk.Frame(self.root, bg=BG_SURFACE, padx=34, pady=28)
+        self.card.pack(fill="both", expand=True, padx=22, pady=18)
 
         self._show_login()
 
@@ -78,26 +94,43 @@ class LoginWindow:
                  bg=BG_SURFACE, fg=GOLD_DIM).pack(anchor="w", pady=(8, 2))
 
     def _entry(self, parent, show=None):
-        e = tk.Entry(parent, font=("Helvetica", 11), bg=BG_FIELD, fg=TEXT_WHITE,
-                     insertbackground=GOLD, relief="flat", bd=0, show=show or "")
-        # Padding via inner frame trick
-        wrap = tk.Frame(parent, bg=GOLD_DIM, pady=1)
-        wrap.pack(fill="x", pady=(0, 4))
-        inner = tk.Frame(wrap, bg=BG_FIELD, padx=10, pady=6)
+        # Rounded-looking input emulation: outer accent border + inner surface
+        wrap = tk.Frame(parent, bg=GOLD, pady=1)
+        wrap.pack(fill="x", pady=(0, 6))
+
+        inner = tk.Frame(wrap, bg=BG_FIELD, padx=12, pady=7)
         inner.pack(fill="x")
-        e = tk.Entry(inner, font=("Helvetica", 11), bg=BG_FIELD, fg=TEXT_WHITE,
-                     insertbackground=GOLD, relief="flat", bd=0, show=show or "")
+
+        e = tk.Entry(
+            inner,
+            font=("Helvetica", 11),
+            bg=BG_FIELD,
+            fg=TEXT_WHITE,
+            insertbackground=GOLD,
+            relief="flat",
+            bd=0,
+            show=show or "",
+        )
         e.pack(fill="x")
         return e
 
+
     def _pw_row(self, parent, entry_attr, flag_attr):
         wrap = tk.Frame(parent, bg=GOLD_DIM, pady=1)
-        wrap.pack(fill="x", pady=(0, 4))
+        wrap.pack(fill="x", pady=(0, 6))
         inner = tk.Frame(wrap, bg=BG_FIELD, padx=10, pady=6)
         inner.pack(fill="x")
 
-        entry = tk.Entry(inner, font=("Helvetica", 11), bg=BG_FIELD, fg=TEXT_WHITE,
-                         insertbackground=GOLD, relief="flat", bd=0, show="●")
+        entry = tk.Entry(
+            inner,
+            font=("Helvetica", 11),
+            bg=BG_FIELD,
+            fg=TEXT_WHITE,
+            insertbackground=GOLD,
+            relief="flat",
+            bd=0,
+            show="●",
+        )
         entry.pack(side="left", fill="x", expand=True)
         setattr(self, entry_attr, entry)
 
@@ -107,9 +140,24 @@ class LoginWindow:
             entry.config(show="" if val else "●")
             btn.config(text="🙈" if val else "👁")
 
-        btn = tk.Button(inner, text="👁", font=("Helvetica", 10), bg=BG_FIELD,
-                        fg=TEXT_MUTED, relief="flat", bd=0, cursor="hand2", command=toggle)
-        btn.pack(side="left", padx=(6, 0))
+        # Eye toggle styled like a small gold pill (still flat for Tk look)
+        btn = tk.Button(
+            inner,
+            text="👁",
+            font=("Helvetica", 10, "bold"),
+            bg=GOLD,
+            fg=BG_APP,
+            relief="flat",
+            bd=0,
+            padx=8,
+            pady=4,
+            cursor="hand2",
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=toggle,
+        )
+        btn.pack(side="left", padx=(8, 0))
+
 
     def _error_label(self, parent):
         lbl = tk.Label(parent, text="", font=("Helvetica", 9),
@@ -119,11 +167,22 @@ class LoginWindow:
 
     def _btn_primary(self, parent, text, cmd):
         f = tk.Frame(parent, bg=GOLD, pady=1)
-        f.pack(fill="x", pady=(16, 4))
-        tk.Button(f, text=text, font=("Helvetica", 12, "bold"),
-                  bg=MAROON, fg=GOLD_BRIGHT, relief="flat",
-                  padx=10, pady=10, cursor="hand2", activebackground=MAROON_LT,
-                  activeforeground=GOLD_BRIGHT, command=cmd).pack(fill="x")
+        f.pack(fill="x", pady=(20, 6))
+        tk.Button(
+            f,
+            text=text,
+            font=("Helvetica", 12, "bold"),
+            bg=GOLD,
+            fg=BG_APP,
+            relief="flat",
+            padx=10,
+            pady=12,
+            cursor="hand2",
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=cmd,
+        ).pack(fill="x")
+
 
     # ── Login screen ──────────────────────────────────────────────────────────
 

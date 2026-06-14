@@ -10,7 +10,6 @@ github = "https://github.com/your-username/ride-booking-system"
 
 import tkinter as tk
 from tkinter import messagebox
-import json, os
 
 from gui.booking_form  import BookingForm
 from gui.booking_list  import BookingList
@@ -19,23 +18,20 @@ from services.booking_service  import BookingService
 from file_handler.file_manager import FileManager
 from file_handler.account_manager import AccountManager
 
-# ── PUP Design System ─────────────────────────────────────────────────────────
-BG_APP      = "#1C0A0A"
-BG_HEADER   = "#2A1010"
-BG_NAV      = "#220D0D"
-MAROON      = "#800000"
-MAROON_LT   = "#A01515"
-GOLD        = "#C8A951"
-GOLD_BRIGHT = "#E8C96B"
-GOLD_DIM    = "#8B7535"
-TEXT_WHITE  = "#F5F0E8"
-TEXT_MUTED  = "#7A6060"
-TEAL        = "#4ECDC4"   # accent for payment/info
-RED_NOTIF   = "#FF5555"
+# ── PUP Maroon, Gold & White Design System ───────────────────────────────────
+BG_APP      = "#1a0000"   # Deep dark maroon background
+BG_HEADER   = "#800000"   # Maroon header
+BG_SURFACE  = "#800000"   # Maroon surface
+BG_SUBBAR   = "#6b0000"   # Slightly darker maroon for subbar
+MAROON      = "#800000"   # PUP Maroon
+MAROON_LT   = "#990000"   # Lighter maroon for hover
+GOLD        = "#FFD700"   # PUP Gold
+TEXT_WHITE  = "#FFFFFF"   # White text
+RED_NOTIF   = "#FF5555"   # Notification red
 
 
 class MainWindow:
-    """Main passenger dashboard — PUP Rides redesign."""
+    """Main passenger dashboard — PUP Rides."""
 
     def __init__(self, account):
         self.account         = account
@@ -58,56 +54,119 @@ class MainWindow:
     # ── Header ────────────────────────────────────────────────────────────────
 
     def _build_header(self):
-        header = tk.Frame(self.root, bg=BG_HEADER)
+        # Gold top accent line
+        tk.Frame(self.root, bg=GOLD, height=4).pack(fill="x")
+
+        header = tk.Frame(self.root, bg=BG_HEADER, padx=24, pady=12)
         header.pack(fill="x")
 
-        # Gold top accent line
-        tk.Frame(header, bg=GOLD, height=3).pack(fill="x")
-
-        nav = tk.Frame(header, bg=BG_HEADER, padx=24, pady=12)
-        nav.pack(fill="x")
-
         # Left: brand
-        brand_frame = tk.Frame(nav, bg=BG_HEADER)
+        brand_frame = tk.Frame(header, bg=BG_HEADER)
         brand_frame.pack(side="left")
-        tk.Label(brand_frame, text="🎓 PUP Rides",
-                 font=("Helvetica", 18, "bold"), bg=BG_HEADER, fg=GOLD_BRIGHT).pack(side="left")
-        tk.Label(brand_frame, text="  Polytechnic University of the Philippines",
-                 font=("Helvetica", 9), bg=BG_HEADER, fg=GOLD_DIM).pack(side="left", pady=(4, 0))
+
+        tk.Label(
+            brand_frame,
+            text="🎓 PUP Rides",
+            font=("Helvetica", 20, "bold"),
+            bg=BG_HEADER,
+            fg=GOLD
+        ).pack(side="left")
+
+        tk.Label(
+            brand_frame,
+            text="  Polytechnic University of the Philippines",
+            font=("Helvetica", 9),
+            bg=BG_HEADER,
+            fg=TEXT_WHITE
+        ).pack(side="left", pady=(6, 0))
 
         # Right: action buttons
-        btn_cfg = dict(font=("Helvetica", 9, "bold"), relief="flat",
-                       padx=12, pady=6, cursor="hand2")
+        btn_cfg = dict(
+            font=("Helvetica", 9, "bold"),
+            relief="flat",
+            padx=12,
+            pady=6,
+            cursor="hand2"
+        )
 
-        tk.Button(nav, text="Logout", bg=MAROON, fg=GOLD_BRIGHT,
-                  activebackground=MAROON_LT, activeforeground=GOLD_BRIGHT,
-                  command=self.logout, **btn_cfg).pack(side="right", padx=(4, 0))
+        tk.Button(
+            header,
+            text="Logout 🚪",
+            bg=GOLD,
+            fg=BG_APP,
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=self.logout,
+            **btn_cfg
+        ).pack(side="right", padx=(4, 0))
 
-        tk.Button(nav, text="↺ Refresh", bg=BG_HEADER, fg=TEXT_WHITE,
-                  activebackground=BG_NAV, command=self.refresh_bookings,
-                  **btn_cfg).pack(side="right", padx=4)
+        tk.Button(
+            header,
+            text="↺ Refresh",
+            bg=MAROON_LT,
+            fg=TEXT_WHITE,
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=self.refresh_bookings,
+            **btn_cfg
+        ).pack(side="right", padx=4)
 
         self.notif_btn = tk.Button(
-            nav, text="🔔 Notifications", bg=BG_HEADER, fg=GOLD,
-            activebackground=BG_NAV, command=self._open_notification_center,
-            **btn_cfg)
+            header,
+            text="🔔 Notifications",
+            bg=MAROON_LT,
+            fg=GOLD,
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=self._open_notification_center,
+            **btn_cfg
+        )
         self.notif_btn.pack(side="right", padx=4)
 
-        tk.Button(nav, text="💳 Payment", bg=BG_HEADER, fg=TEAL,
-                  activebackground=BG_NAV, command=self._open_payment_methods,
-                  **btn_cfg).pack(side="right", padx=4)
+        tk.Button(
+            header,
+            text="💳 Payment",
+            bg=MAROON_LT,
+            fg=TEXT_WHITE,
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=self._open_payment_methods,
+            **btn_cfg
+        ).pack(side="right", padx=4)
 
-        tk.Button(nav, text="ℹ About", bg=BG_HEADER, fg=TEXT_MUTED,
-                  activebackground=BG_NAV, command=self._open_about,
-                  **btn_cfg).pack(side="right", padx=4)
+        tk.Button(
+            header,
+            text="ℹ About",
+            bg=MAROON_LT,
+            fg=TEXT_WHITE,
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=self._open_about,
+            **btn_cfg
+        ).pack(side="right", padx=4)
 
-        # Welcome bar below nav
-        sub = tk.Frame(self.root, bg=MAROON, padx=24, pady=8)
+        # Gold divider line
+        tk.Frame(self.root, bg=GOLD, height=2).pack(fill="x")
+
+        # Welcome subbar
+        sub = tk.Frame(self.root, bg=BG_SUBBAR, padx=24, pady=8)
         sub.pack(fill="x")
-        tk.Label(sub, text=f"Good day, {self.account.name}!  🎓",
-                 font=("Helvetica", 11), bg=MAROON, fg=GOLD_BRIGHT).pack(side="left")
-        tk.Label(sub, text="PUP — Ang Paaralan ng Bayan",
-                 font=("Helvetica", 9, "italic"), bg=MAROON, fg=GOLD_DIM).pack(side="right")
+
+        tk.Label(
+            sub,
+            text=f"👋 Good day, {self.account.name}!",
+            font=("Helvetica", 11, "bold"),
+            bg=BG_SUBBAR,
+            fg=GOLD
+        ).pack(side="left")
+
+        tk.Label(
+            sub,
+            text="PUP — Ang Paaralan ng Bayan 🎓",
+            font=("Helvetica", 9, "italic"),
+            bg=BG_SUBBAR,
+            fg=TEXT_WHITE
+        ).pack(side="right")
 
         self._refresh_notif_badge()
 
@@ -126,7 +185,7 @@ class MainWindow:
         if self.root.winfo_exists():
             self._notif_after_id = self.root.after(5000, self._refresh_notif_badge)
 
-    # ── Body ─────────────────────────────────────────────────────────────────
+    # ── Body ──────────────────────────────────────────────────────────────────
 
     def _build_body(self):
         body = tk.Frame(self.root, bg=BG_APP)
@@ -144,10 +203,14 @@ class MainWindow:
 
         left_inner = tk.Frame(left_canvas, bg=BG_APP)
         left_win = left_canvas.create_window((0, 0), window=left_inner, anchor="nw")
-        left_inner.bind("<Configure>",
-                        lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all")))
-        left_canvas.bind("<Configure>",
-                         lambda e: left_canvas.itemconfig(left_win, width=e.width))
+        left_inner.bind(
+            "<Configure>",
+            lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all"))
+        )
+        left_canvas.bind(
+            "<Configure>",
+            lambda e: left_canvas.itemconfig(left_win, width=e.width)
+        )
 
         self.booking_form = BookingForm(
             left_inner, self.service, self.file_manager,
