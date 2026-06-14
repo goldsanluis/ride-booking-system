@@ -19,15 +19,15 @@ from file_handler.file_manager import FileManager
 from file_handler.account_manager import AccountManager
 
 # ── PUP Maroon, Gold & White Design System ───────────────────────────────────
-BG_APP      = "#1a0000"   # Deep dark maroon background
-BG_HEADER   = "#800000"   # Maroon header
-BG_SURFACE  = "#800000"   # Maroon surface
-BG_SUBBAR   = "#6b0000"   # Slightly darker maroon for subbar
-MAROON      = "#800000"   # PUP Maroon
-MAROON_LT   = "#990000"   # Lighter maroon for hover
-GOLD        = "#FFD700"   # PUP Gold
-TEXT_WHITE  = "#FFFFFF"   # White text
-RED_NOTIF   = "#FF5555"   # Notification red
+BG_APP      = "#1a0000"
+BG_HEADER   = "#800000"
+BG_SURFACE  = "#800000"
+BG_SUBBAR   = "#6b0000"
+MAROON      = "#800000"
+MAROON_LT   = "#990000"
+GOLD        = "#FFD700"
+TEXT_WHITE  = "#FFFFFF"
+RED_NOTIF   = "#FF5555"
 
 
 class MainWindow:
@@ -54,118 +54,69 @@ class MainWindow:
     # ── Header ────────────────────────────────────────────────────────────────
 
     def _build_header(self):
-        # Gold top accent line
         tk.Frame(self.root, bg=GOLD, height=4).pack(fill="x")
 
         header = tk.Frame(self.root, bg=BG_HEADER, padx=24, pady=12)
         header.pack(fill="x")
 
-        # Left: brand
         brand_frame = tk.Frame(header, bg=BG_HEADER)
         brand_frame.pack(side="left")
-
         tk.Label(
-            brand_frame,
-            text="🎓 PUP Rides",
-            font=("Helvetica", 20, "bold"),
-            bg=BG_HEADER,
-            fg=GOLD
+            brand_frame, text="🎓 PUP Rides",
+            font=("Helvetica", 20, "bold"), bg=BG_HEADER, fg=GOLD,
         ).pack(side="left")
-
         tk.Label(
-            brand_frame,
-            text="  Polytechnic University of the Philippines",
-            font=("Helvetica", 9),
-            bg=BG_HEADER,
-            fg=TEXT_WHITE
+            brand_frame, text="  Polytechnic University of the Philippines",
+            font=("Helvetica", 9), bg=BG_HEADER, fg=TEXT_WHITE,
         ).pack(side="left", pady=(6, 0))
 
-        # Right: action buttons
         btn_cfg = dict(
-            font=("Helvetica", 9, "bold"),
-            relief="flat",
-            padx=12,
-            pady=6,
-            cursor="hand2"
+            font=("Helvetica", 9, "bold"), relief="flat",
+            padx=12, pady=6, cursor="hand2",
         )
 
         tk.Button(
-            header,
-            text="Logout 🚪",
-            bg=GOLD,
-            fg=BG_APP,
-            activebackground=BG_APP,
-            activeforeground=GOLD,
-            command=self.logout,
-            **btn_cfg
+            header, text="Logout 🚪", bg=GOLD, fg=BG_APP,
+            activebackground=BG_APP, activeforeground=GOLD,
+            command=self.logout, **btn_cfg,
         ).pack(side="right", padx=(4, 0))
 
         tk.Button(
-            header,
-            text="↺ Refresh",
-            bg=MAROON_LT,
-            fg=TEXT_WHITE,
-            activebackground=BG_APP,
-            activeforeground=GOLD,
-            command=self.refresh_bookings,
-            **btn_cfg
+            header, text="↺ Refresh", bg=MAROON_LT, fg=TEXT_WHITE,
+            activebackground=BG_APP, activeforeground=GOLD,
+            command=self.refresh_bookings, **btn_cfg,
         ).pack(side="right", padx=4)
 
         self.notif_btn = tk.Button(
-            header,
-            text="🔔 Notifications",
-            bg=MAROON_LT,
-            fg=GOLD,
-            activebackground=BG_APP,
-            activeforeground=GOLD,
-            command=self._open_notification_center,
-            **btn_cfg
+            header, text="🔔 Notifications", bg=MAROON_LT, fg=GOLD,
+            activebackground=BG_APP, activeforeground=GOLD,
+            command=self._open_notification_center, **btn_cfg,
         )
         self.notif_btn.pack(side="right", padx=4)
 
         tk.Button(
-            header,
-            text="💳 Payment",
-            bg=MAROON_LT,
-            fg=TEXT_WHITE,
-            activebackground=BG_APP,
-            activeforeground=GOLD,
-            command=self._open_payment_methods,
-            **btn_cfg
+            header, text="💳 Payment", bg=MAROON_LT, fg=TEXT_WHITE,
+            activebackground=BG_APP, activeforeground=GOLD,
+            command=self._open_payment_methods, **btn_cfg,
         ).pack(side="right", padx=4)
 
         tk.Button(
-            header,
-            text="ℹ About",
-            bg=MAROON_LT,
-            fg=TEXT_WHITE,
-            activebackground=BG_APP,
-            activeforeground=GOLD,
-            command=self._open_about,
-            **btn_cfg
+            header, text="ℹ About", bg=MAROON_LT, fg=TEXT_WHITE,
+            activebackground=BG_APP, activeforeground=GOLD,
+            command=self._open_about, **btn_cfg,
         ).pack(side="right", padx=4)
 
-        # Gold divider line
         tk.Frame(self.root, bg=GOLD, height=2).pack(fill="x")
 
-        # Welcome subbar
         sub = tk.Frame(self.root, bg=BG_SUBBAR, padx=24, pady=8)
         sub.pack(fill="x")
-
         tk.Label(
-            sub,
-            text=f"👋 Good day, {self.account.name}!",
-            font=("Helvetica", 11, "bold"),
-            bg=BG_SUBBAR,
-            fg=GOLD
+            sub, text=f"👋 Good day, {self.account.name}!",
+            font=("Helvetica", 11, "bold"), bg=BG_SUBBAR, fg=GOLD,
         ).pack(side="left")
-
         tk.Label(
-            sub,
-            text="PUP — Ang Paaralan ng Bayan 🎓",
-            font=("Helvetica", 9, "italic"),
-            bg=BG_SUBBAR,
-            fg=TEXT_WHITE
+            sub, text="PUP — Ang Paaralan ng Bayan 🎓",
+            font=("Helvetica", 9, "italic"), bg=BG_SUBBAR, fg=TEXT_WHITE,
         ).pack(side="right")
 
         self._refresh_notif_badge()
@@ -191,37 +142,23 @@ class MainWindow:
         body = tk.Frame(self.root, bg=BG_APP)
         body.pack(fill="both", expand=True, padx=20, pady=14)
 
-        # ── Left column: booking form + wallet ────────────────────────────────
-        left = tk.Frame(body, bg=BG_APP)
-        left.pack(side="left", fill="both", expand=True, padx=(0, 8))
-
-        left_canvas = tk.Canvas(left, bg=BG_APP, highlightthickness=0)
-        left_scroll = tk.Scrollbar(left, orient="vertical", command=left_canvas.yview)
-        left_canvas.configure(yscrollcommand=left_scroll.set)
-        left_scroll.pack(side="right", fill="y")
-        left_canvas.pack(side="left", fill="both", expand=True)
-
-        left_inner = tk.Frame(left_canvas, bg=BG_APP)
-        left_win = left_canvas.create_window((0, 0), window=left_inner, anchor="nw")
-        left_inner.bind(
-            "<Configure>",
-            lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all"))
-        )
-        left_canvas.bind(
-            "<Configure>",
-            lambda e: left_canvas.itemconfig(left_win, width=e.width)
-        )
+        # ── Left column: BookingForm owns its own scroll canvas.
+        #    Give it a fixed width so it doesn't fight the right panel.
+        left = tk.Frame(body, bg=BG_APP, width=420)
+        left.pack(side="left", fill="y", expand=False, padx=(0, 8))
+        left.pack_propagate(False)   # honour the fixed width
 
         self.booking_form = BookingForm(
-            left_inner, self.service, self.file_manager,
+            left, self.service, self.file_manager,
             self.refresh, self.account, self.account_manager,
         )
-        self.booking_form.frame.pack(fill="both", expand=True, pady=(0, 8))
+        self.booking_form.frame.pack(fill="both", expand=True)
 
-        self.wallet_panel = WalletPanel(left_inner, self.account, self.account_manager)
-        self.wallet_panel.frame.pack(fill="x")
+        # WalletPanel is now a no-op stub; keep the line so nothing breaks
+        self.wallet_panel = WalletPanel(left, self.account, self.account_manager)
+        # do NOT pack wallet_panel.frame — it is empty and would add dead space
 
-        # ── Right column: booking list ────────────────────────────────────────
+        # ── Right column: booking list fills the rest ─────────────────────────
         self.booking_list = BookingList(body, self.service, self.account)
         self.booking_list.frame.pack(side="right", fill="both", expand=True, padx=(8, 0))
 

@@ -9,21 +9,88 @@ github = "https://github.com/your-username/ride-booking-system"
 """
 
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import filedialog
+from tkinter import messagebox, filedialog, ttk
 
 from file_handler.driver_manager import DriverManager
 
 # ── PUP Maroon, Gold & White Design System ────────────────────────────────────
-BG_DARK     = "#1a0000"   # Deep dark maroon background
-BG_CARD     = "#800000"   # Maroon card surface
-GOLD        = "#FFD700"   # PUP Gold
-GOLD_ACCENT = "#FFD700"   # Gold accent
-TEXT_WHITE  = "#FFFFFF"   # White text
-TEXT_GRAY   = "#ffcccc"   # Muted light pink-white for subtitles
-GREEN       = "#FFD700"   # Reuse gold for completed
-TEAL        = "#FFD700"   # Reuse gold for scheduled
-RED         = "#FF6B6B"   # Error/cancel red (keep for clarity)
+BG_DARK     = "#1a0000"
+BG_CARD     = "#800000"
+BG_FIELD    = "#6b0000"
+MAROON_LT   = "#990000"
+GOLD        = "#FFD700"
+GOLD_DIM    = "#FFC200"
+TEXT_WHITE  = "#FFFFFF"
+TEXT_GRAY   = "#ffcccc"
+RED         = "#FF6B6B"
+DIVIDER     = "#990000"
+
+
+def _configure_slim_scrollbar():
+    """Register a slim ttk scrollbar style (6 px, no arrows)."""
+    style = ttk.Style()
+    try:
+        style.theme_use("default")
+    except Exception:
+        pass
+    style.configure(
+        "Slim.Vertical.TScrollbar",
+        gripcount=0,
+        background=MAROON_LT,
+        darkcolor=BG_FIELD,
+        lightcolor=BG_FIELD,
+        troughcolor=BG_DARK,
+        bordercolor=BG_DARK,
+        arrowcolor=GOLD,
+        width=6,
+        arrowsize=0,
+        relief="flat",
+    )
+    style.map(
+        "Slim.Vertical.TScrollbar",
+        background=[("active", GOLD), ("!active", MAROON_LT)],
+    )
+
+
+def _make_scrollable(parent):
+    """Return (canvas, inner_frame) with slim scrollbar and mousewheel support."""
+    _configure_slim_scrollbar()
+
+    canvas = tk.Canvas(parent, bg=BG_DARK, highlightthickness=0)
+    vbar   = ttk.Scrollbar(
+        parent, orient="vertical",
+        command=canvas.yview,
+        style="Slim.Vertical.TScrollbar",
+    )
+    canvas.configure(yscrollcommand=vbar.set)
+    vbar.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+
+    inner  = tk.Frame(canvas, bg=BG_DARK)
+    win_id = canvas.create_window((0, 0), window=inner, anchor="nw")
+
+    def on_frame_configure(event):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    def on_canvas_configure(event):
+        canvas.itemconfig(win_id, width=event.width)
+
+    def on_mousewheel(event):
+        if event.num == 4:
+            canvas.yview_scroll(-1, "units")
+        elif event.num == 5:
+            canvas.yview_scroll(1, "units")
+        else:
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    inner.bind("<Configure>", on_frame_configure)
+    canvas.bind("<Configure>", on_canvas_configure)
+    canvas.bind_all("<MouseWheel>", on_mousewheel)
+    canvas.bind_all("<Button-4>",   on_mousewheel)
+    canvas.bind_all("<Button-5>",   on_mousewheel)
+
+    return canvas, inner
+
 
 class BookingList:
 
@@ -40,15 +107,19 @@ class BookingList:
         tab_bar.pack(fill="x")
 
         self.tab_book_btn = tk.Button(
-            tab_bar, text="📋 My Bookings",
-            font=("Helvetica", 10, "bold"), relief="flat", padx=16, pady=7,
-            cursor="hand2", command=self._show_bookings_tab)
+            tab_bar, text="📋  My Bookings",
+            font=("Helvetica", 10, "bold"), relief="flat",
+            padx=16, pady=7, cursor="hand2",
+            command=self._show_bookings_tab,
+        )
         self.tab_book_btn.pack(side="left")
 
         self.tab_stats_btn = tk.Button(
-            tab_bar, text="📊 My Stats",
-            font=("Helvetica", 10, "bold"), relief="flat", padx=16, pady=7,
-            cursor="hand2", command=self._show_stats_tab)
+            tab_bar, text="📊  My Stats",
+            font=("Helvetica", 10, "bold"), relief="flat",
+            padx=16, pady=7, cursor="hand2",
+            command=self._show_stats_tab,
+        )
         self.tab_stats_btn.pack(side="left")
 
         self.content_frame = tk.Frame(self.frame, bg=BG_DARK)
@@ -79,103 +150,73 @@ class BookingList:
     def _build_bookings_ui(self):
         # ── Actions row ───────────────────────────────────────────────────────
         action_frame = tk.Frame(self.content_frame, bg=BG_DARK, padx=8, pady=6)
-        action_frame.pack(fill="x", padx=5)
-
+        action_frame.pack(fill="x", padx=4)
         tk.Button(
-            action_frame,
-            text="🧾 Export Bookings",
-            font=("Helvetica", 10, "bold"),
-            bg=GOLD,
-            fg=BG_DARK,
-            relief="flat",
-            padx=12,
-            pady=6,
-            cursor="hand2",
+            action_frame, text="🧾  Export Bookings",
+            font=("Helvetica", 10, "bold"), bg=GOLD, fg=BG_DARK,
+            relief="flat", padx=12, pady=5, cursor="hand2",
+            activebackground=MAROON_LT, activeforeground=GOLD,
             command=self._export_bookings,
         ).pack(side="right")
 
         # ── Search bar ────────────────────────────────────────────────────────
         search_frame = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=6)
-        search_frame.pack(fill="x", padx=5, pady=(6, 0))
-        tk.Label(search_frame, text="🔍", font=("Helvetica", 12),
+        search_frame.pack(fill="x", padx=4, pady=(4, 0))
+        tk.Label(search_frame, text="🔍", font=("Helvetica", 11),
                  bg=BG_CARD, fg=GOLD).pack(side="left")
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", lambda *_: self.refresh())
-        search_entry = tk.Entry(search_frame, textvariable=self.search_var,
-                                font=("Helvetica", 10), bg=BG_DARK, fg=TEXT_WHITE,
-                                insertbackground=GOLD, relief="flat", bd=4)
-        search_entry.pack(side="left", fill="x", expand=True, padx=6)
-        tk.Button(search_frame, text="✖", font=("Helvetica", 9),
-                  bg=BG_CARD, fg=TEXT_GRAY, relief="flat", cursor="hand2",
-                  command=lambda: self.search_var.set("")).pack(side="left")
+        tk.Entry(
+            search_frame, textvariable=self.search_var,
+            font=("Helvetica", 10), bg=BG_DARK, fg=TEXT_WHITE,
+            insertbackground=GOLD, relief="flat", bd=4,
+        ).pack(side="left", fill="x", expand=True, padx=6)
+        tk.Button(
+            search_frame, text="✖", font=("Helvetica", 9),
+            bg=BG_CARD, fg=TEXT_GRAY, relief="flat", cursor="hand2",
+            command=lambda: self.search_var.set(""),
+        ).pack(side="left")
 
         # ── Filter bar ────────────────────────────────────────────────────────
-        filter_frame = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=6)
-        filter_frame.pack(fill="x", padx=5, pady=(0, 6))
+        filter_frame = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=5)
+        filter_frame.pack(fill="x", padx=4, pady=(0, 4))
 
         tk.Label(filter_frame, text="Filter:", font=("Helvetica", 9, "bold"),
                  bg=BG_CARD, fg=GOLD).grid(row=0, column=0, sticky="w", padx=(0, 6))
 
-        tk.Label(filter_frame, text="Status:", font=("Helvetica", 9),
-                 bg=BG_CARD, fg=TEXT_GRAY).grid(row=0, column=1, sticky="w")
-        self.status_var = tk.StringVar(value="All")
-        status_cb = tk.OptionMenu(filter_frame, self.status_var,
-                                  "All", "Active", "Scheduled", "Completed", "Cancelled",
-                                  command=lambda _: self.refresh())
-        status_cb.config(font=("Helvetica", 9), bg=BG_DARK, fg=TEXT_WHITE,
-                         activebackground=BG_CARD, relief="flat", bd=0, highlightthickness=0)
-        status_cb["menu"].config(bg=BG_DARK, fg=TEXT_WHITE, font=("Helvetica", 9))
-        status_cb.grid(row=0, column=2, padx=(2, 12))
-
-        tk.Label(filter_frame, text="Vehicle:", font=("Helvetica", 9),
-                 bg=BG_CARD, fg=TEXT_GRAY).grid(row=0, column=3, sticky="w")
-        self.vehicle_var = tk.StringVar(value="All")
-        veh_cb = tk.OptionMenu(filter_frame, self.vehicle_var,
-                               "All", "Car", "Van", "Bike",
-                               command=lambda _: self.refresh())
-        veh_cb.config(font=("Helvetica", 9), bg=BG_DARK, fg=TEXT_WHITE,
+        def _dd(parent, var, options, col, label):
+            tk.Label(parent, text=label, font=("Helvetica", 9),
+                     bg=BG_CARD, fg=TEXT_GRAY).grid(row=0, column=col, sticky="w")
+            cb = tk.OptionMenu(parent, var, *options, command=lambda _: self.refresh())
+            cb.config(font=("Helvetica", 9), bg=BG_DARK, fg=TEXT_WHITE,
                       activebackground=BG_CARD, relief="flat", bd=0, highlightthickness=0)
-        veh_cb["menu"].config(bg=BG_DARK, fg=TEXT_WHITE, font=("Helvetica", 9))
-        veh_cb.grid(row=0, column=4, padx=(2, 12))
+            cb["menu"].config(bg=BG_DARK, fg=TEXT_WHITE, font=("Helvetica", 9))
+            cb.grid(row=0, column=col + 1, padx=(2, 10))
 
-        tk.Label(filter_frame, text="Date:", font=("Helvetica", 9),
-                 bg=BG_CARD, fg=TEXT_GRAY).grid(row=0, column=5, sticky="w")
-        self.date_var = tk.StringVar(value="All time")
-        date_cb = tk.OptionMenu(filter_frame, self.date_var,
-                                "All time", "Today", "This week", "This month",
-                                command=lambda _: self.refresh())
-        date_cb.config(font=("Helvetica", 9), bg=BG_DARK, fg=TEXT_WHITE,
-                       activebackground=BG_CARD, relief="flat", bd=0, highlightthickness=0)
-        date_cb["menu"].config(bg=BG_DARK, fg=TEXT_WHITE, font=("Helvetica", 9))
-        date_cb.grid(row=0, column=6, padx=(2, 12))
+        self.status_var  = tk.StringVar(value="All")
+        self.vehicle_var = tk.StringVar(value="All")
+        self.date_var    = tk.StringVar(value="All time")
 
-        tk.Button(filter_frame, text="✖ Clear", font=("Helvetica", 9),
-                  bg=BG_DARK, fg=TEXT_GRAY, relief="flat", padx=6,
-                  cursor="hand2", command=self._clear_filters).grid(row=0, column=7)
+        _dd(filter_frame, self.status_var,
+            ["All", "Active", "Scheduled", "Completed", "Cancelled"], 1, "Status:")
+        _dd(filter_frame, self.vehicle_var,
+            ["All", "Car", "Van", "Bike"], 3, "Vehicle:")
+        _dd(filter_frame, self.date_var,
+            ["All time", "Today", "This week", "This month"], 5, "Date:")
 
-        self.count_label = tk.Label(filter_frame, text="", font=("Helvetica", 9),
-                                    bg=BG_CARD, fg=TEXT_GRAY)
-        self.count_label.grid(row=0, column=8, padx=(12, 0))
+        tk.Button(
+            filter_frame, text="✖ Clear", font=("Helvetica", 9),
+            bg=BG_DARK, fg=TEXT_GRAY, relief="flat", padx=6, cursor="hand2",
+            command=self._clear_filters,
+        ).grid(row=0, column=7)
+
+        self.count_label = tk.Label(filter_frame, text="",
+                                    font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY)
+        self.count_label.grid(row=0, column=8, padx=(10, 0))
 
         # ── Scrollable list ───────────────────────────────────────────────────
-        self.canvas    = tk.Canvas(self.content_frame, bg=BG_DARK, highlightthickness=0)
-        self.scrollbar = tk.Scrollbar(self.content_frame, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-        self.scrollbar.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True)
-
-        self.inner_frame   = tk.Frame(self.canvas, bg=BG_DARK)
-        self.canvas_window = self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
-        self.inner_frame.bind("<Configure>", self._on_frame_configure)
-        self.canvas.bind("<Configure>",      self._on_canvas_configure)
-
+        self.canvas, self.inner_frame = _make_scrollable(self.content_frame)
         self.refresh()
-
-    def _on_frame_configure(self, event):
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-    def _on_canvas_configure(self, event):
-        self.canvas.itemconfig(self.canvas_window, width=event.width)
 
     def _clear_filters(self):
         self.status_var.set("All")
@@ -203,7 +244,6 @@ class BookingList:
                 haystack = (b.start_location + " " + b.end_location + " " + (b.notes or "")).lower()
                 if keyword not in haystack:
                     continue
-
             if period != "All time":
                 bdate = None
                 for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
@@ -212,20 +252,14 @@ class BookingList:
                         break
                     except ValueError:
                         continue
-
                 if bdate is None:
                     continue
-
-                if period == "Today":
-                    if bdate.date() != now.date():
-                        continue
-                elif period == "This week":
-                    if (now - bdate).days > 7:
-                        continue
-                elif period == "This month":
-                    if bdate.month != now.month or bdate.year != now.year:
-                        continue
-
+                if period == "Today" and bdate.date() != now.date():
+                    continue
+                elif period == "This week" and (now - bdate).days > 7:
+                    continue
+                elif period == "This month" and (bdate.month != now.month or bdate.year != now.year):
+                    continue
             result.append(b)
         return result
 
@@ -244,106 +278,115 @@ class BookingList:
         total   = len(all_bookings)
         showing = len(filtered_bookings)
         self.count_label.config(
-            text=f"Showing {showing} of {total}" if showing != total else f"{total} bookings")
+            text=(f"Showing {showing} of {total}" if showing != total else f"{total} bookings")
+        )
 
         if not filtered_bookings:
-            msg = ("No bookings yet 😴" if total == 0
-                   else "No bookings match current filters.")
+            msg = "No bookings yet 😴" if total == 0 else "No bookings match current filters."
             tk.Label(self.inner_frame, text=msg,
-                     font=("Helvetica", 11), bg=BG_DARK, fg=TEXT_GRAY).pack(pady=20)
+                     font=("Helvetica", 11), bg=BG_DARK, fg=TEXT_GRAY,
+                     ).pack(pady=24)
             return
 
         for booking in filtered_bookings:
             self._create_card(booking)
 
     def _create_card(self, booking):
-        card = tk.Frame(self.inner_frame, bg=BG_CARD, padx=10, pady=10)
-        card.pack(fill="x", padx=5, pady=5)
-
         status_color = {
             "Active":    GOLD,
-            "Completed": "#90EE90",   # light green — distinct from gold
+            "Completed": "#90EE90",
             "Cancelled": RED,
-            "Scheduled": "#87CEEB",   # light blue — distinct from gold
+            "Scheduled": "#87CEEB",
         }.get(booking.status, GOLD)
 
-        hdr = tk.Frame(card, bg=BG_CARD)
-        hdr.pack(fill="x", pady=5)
-        tk.Label(hdr, text=f"Booking #{booking.booking_id}",
-                 font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=GOLD).pack(side="left")
-        tk.Label(hdr, text=f"● {booking.status}",
-                 font=("Helvetica", 10, "bold"), bg=BG_CARD, fg=status_color).pack(side="right")
+        # Outer wrapper with left-accent border
+        wrapper = tk.Frame(self.inner_frame, bg=status_color)
+        wrapper.pack(fill="x", padx=6, pady=4)
 
-        tk.Label(card, text=f"🚗 Driver: {booking.driver.name}",
-                 font=("Helvetica", 10), bg=BG_CARD, fg=GOLD).pack(anchor="w", pady=1)
-        tk.Label(card, text=f"📍 {booking.start_location} → {booking.end_location}",
-                 font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_WHITE).pack(anchor="w", pady=1)
+        card = tk.Frame(wrapper, bg=BG_CARD, padx=12, pady=10)
+        card.pack(fill="x", padx=(3, 0))
+
+        # Header
+        hdr = tk.Frame(card, bg=BG_CARD)
+        hdr.pack(fill="x", pady=(0, 4))
+        tk.Label(hdr, text=f"Booking #{booking.booking_id}",
+                 font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=GOLD,
+                 ).pack(side="left")
+        tk.Label(hdr, text=f"● {booking.status}",
+                 font=("Helvetica", 10, "bold"), bg=BG_CARD, fg=status_color,
+                 ).pack(side="right")
+
+        tk.Frame(card, bg=DIVIDER, height=1).pack(fill="x", pady=(0, 6))
+
+        tk.Label(card, text=f"🚗  {booking.driver.name}",
+                 font=("Helvetica", 10), bg=BG_CARD, fg=GOLD,
+                 ).pack(anchor="w", pady=1)
+        tk.Label(card,
+                 text=f"📍  {booking.start_location}  →  {booking.end_location}",
+                 font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_WHITE,
+                 ).pack(anchor="w", pady=1)
 
         surge_txt = f"  🚀×{booking.surge}" if booking.surge > 1.0 else ""
         pax_txt   = f"  👥{getattr(booking, 'passengers', 1)}" if getattr(booking, 'passengers', 1) > 1 else ""
-        promo_txt = f"  🎟️−₱{booking.discount:.0f}" if getattr(booking, 'discount', 0) > 0 else ""
-        det = f"📏 {booking.distance} km  |  💰 ₱{booking.total_cost:.2f}  |  {booking.vehicle.name}{surge_txt}{pax_txt}{promo_txt}"
-        tk.Label(card, text=det, font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY
-                 ).pack(anchor="w", pady=1)
+        promo_txt = f"  🎟️ −₱{booking.discount:.0f}" if getattr(booking, 'discount', 0) > 0 else ""
+        det = (
+            f"📏 {booking.distance} km  |  "
+            f"💰 ₱{booking.total_cost:.2f}  |  "
+            f"{booking.vehicle.name}{surge_txt}{pax_txt}{promo_txt}"
+        )
+        tk.Label(card, text=det, font=("Helvetica", 9),
+                 bg=BG_CARD, fg=TEXT_GRAY).pack(anchor="w", pady=1)
 
         sched = getattr(booking, "scheduled_time", None)
         if sched:
-            tk.Label(card, text=f"🗓️ Scheduled: {sched}",
-                     font=("Helvetica", 9, "bold"), bg=BG_CARD, fg="#87CEEB").pack(anchor="w", pady=1)
+            tk.Label(card, text=f"🗓️  Scheduled:  {sched}",
+                     font=("Helvetica", 9, "bold"), bg=BG_CARD, fg="#87CEEB",
+                     ).pack(anchor="w", pady=1)
 
         notes = getattr(booking, "notes", "")
         if notes:
-            tk.Label(card, text=f"📝 {notes[:80]}{'…' if len(notes) > 80 else ''}",
-                     font=("Helvetica", 9, "italic"), bg=BG_CARD, fg=TEXT_GRAY
+            tk.Label(card,
+                     text=f"📝  {notes[:80]}{'…' if len(notes) > 80 else ''}",
+                     font=("Helvetica", 9, "italic"), bg=BG_CARD, fg=TEXT_GRAY,
                      ).pack(anchor="w", pady=1)
 
-        tk.Label(card, text=f"📅 {booking.date}",
-                 font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY).pack(anchor="w", pady=1)
+        tk.Label(card, text=f"📅  {booking.date}",
+                 font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY,
+                 ).pack(anchor="w", pady=(1, 6))
 
         btn_row = tk.Frame(card, bg=BG_CARD)
-        btn_row.pack(fill="x", pady=6)
+        btn_row.pack(fill="x")
+
+        def _btn(parent, text, bg, fg, cmd, side="left"):
+            tk.Button(
+                parent, text=text,
+                font=("Helvetica", 9, "bold"), bg=bg, fg=fg,
+                relief="flat", padx=10, pady=4, cursor="hand2",
+                activebackground=MAROON_LT, activeforeground=fg,
+                command=cmd,
+            ).pack(side=side, padx=2)
 
         if booking.status == "Scheduled":
-            tk.Button(btn_row, text="▶ Activate Now",
-                      font=("Helvetica", 9, "bold"), bg="#87CEEB", fg=BG_DARK,
-                      relief="flat", padx=8, pady=4, cursor="hand2",
-                      command=lambda b=booking: self._activate(b)).pack(side="left", padx=2)
-            tk.Button(btn_row, text="❌ Cancel",
-                      font=("Helvetica", 9, "bold"), bg=RED, fg="white",
-                      relief="flat", padx=8, pady=4, cursor="hand2",
-                      command=lambda b=booking: self._cancel(b)).pack(side="left", padx=2)
+            _btn(btn_row, "▶  Activate Now", "#87CEEB", BG_DARK, lambda b=booking: self._activate(b))
+            _btn(btn_row, "❌  Cancel",       RED,       "white",  lambda b=booking: self._cancel(b))
 
         elif booking.status == "Active":
-            tk.Button(btn_row, text="✅ Complete",
-                      font=("Helvetica", 9, "bold"), bg="#90EE90", fg=BG_DARK,
-                      relief="flat", padx=8, pady=4, cursor="hand2",
-                      command=lambda b=booking: self._complete(b)).pack(side="left", padx=2)
-            tk.Button(btn_row, text="📍 Track",
-                      font=("Helvetica", 9, "bold"), bg="#87CEEB", fg=BG_DARK,
-                      relief="flat", padx=8, pady=4, cursor="hand2",
-                      command=lambda b=booking: self._track(b)).pack(side="left", padx=2)
-            tk.Button(btn_row, text="❌ Cancel",
-                      font=("Helvetica", 9, "bold"), bg=RED, fg="white",
-                      relief="flat", padx=8, pady=4, cursor="hand2",
-                      command=lambda b=booking: self._cancel(b)).pack(side="left", padx=2)
+            _btn(btn_row, "✅  Complete", "#90EE90", BG_DARK, lambda b=booking: self._complete(b))
+            _btn(btn_row, "📍  Track",    "#87CEEB", BG_DARK, lambda b=booking: self._track(b))
+            _btn(btn_row, "❌  Cancel",   RED,       "white",  lambda b=booking: self._cancel(b))
 
         elif booking.status == "Completed":
             if not booking.rating:
-                tk.Button(btn_row, text="⭐ Rate",
-                          font=("Helvetica", 9, "bold"), bg=GOLD, fg=BG_DARK,
-                          relief="flat", padx=8, pady=4, cursor="hand2",
-                          command=lambda b=booking: self._rate(b)).pack(side="left", padx=2)
+                _btn(btn_row, "⭐  Rate", GOLD, BG_DARK, lambda b=booking: self._rate(b))
             else:
-                tk.Label(btn_row, text=f"{'⭐'*booking.rating} Your rating",
+                tk.Label(btn_row, text=f"{'⭐' * booking.rating}  Your rating",
                          font=("Helvetica", 9), bg=BG_CARD, fg=GOLD).pack(side="left", padx=4)
 
         if booking.status == "Completed":
-            tk.Button(btn_row, text="🧾 Receipt",
-                      font=("Helvetica", 9, "bold"), bg=BG_DARK, fg=GOLD,
-                      relief="flat", padx=8, pady=4, cursor="hand2",
-                      command=lambda b=booking: self._show_receipt(b)).pack(side="right", padx=2)
+            _btn(btn_row, "🧾  Receipt", BG_DARK, GOLD,
+                 lambda b=booking: self._show_receipt(b), side="right")
 
-    # ── actions ───────────────────────────────────────────────────────────────
+    # ── Actions ───────────────────────────────────────────────────────────────
     def _cancel(self, booking):
         refund_pct = 50 if booking.status == "Active" else 100
         confirm_msg = (
@@ -352,9 +395,7 @@ class BookingList:
         )
         if messagebox.askyesno("Cancel Booking", confirm_msg):
             msg, refund_amt = self.service.cancel_booking(
-                booking.booking_id,
-                self.account.username,
-                refund_policy=refund_pct,
+                booking.booking_id, self.account.username, refund_policy=refund_pct,
             )
             self.account.wallet_balance += refund_amt
             from file_handler.account_manager import AccountManager
@@ -364,10 +405,8 @@ class BookingList:
             notif_svc.push(
                 self.account.username,
                 f"Booking #{booking.booking_id} cancelled. ₱{refund_amt:.2f} refunded.",
-                category="refund",
-                booking_id=booking.booking_id,
+                category="refund", booking_id=booking.booking_id,
             )
-
             self._save()
             messagebox.showinfo("Cancelled", msg)
             self.refresh()
@@ -379,10 +418,15 @@ class BookingList:
             if booking.driver.driver_id and booking.driver.driver_id != "unassigned":
                 self.driver_manager.update_driver_wallet(booking.driver.driver_id, booking.total_cost)
             import services.notification_service as notif_svc
-            notif_svc.push(self.account.username,
-                           f"Ride #{booking.booking_id} completed! Please rate your driver {booking.driver.name}.",
-                           category="ride", booking_id=booking.booking_id)
-            self._save(); messagebox.showinfo("Success", msg); self.refresh()
+            notif_svc.push(
+                self.account.username,
+                f"Ride #{booking.booking_id} completed! "
+                f"Please rate your driver {booking.driver.name}.",
+                category="ride", booking_id=booking.booking_id,
+            )
+            self._save()
+            messagebox.showinfo("Success", msg)
+            self.refresh()
 
     def _activate(self, booking):
         if messagebox.askyesno("Activate Now",
@@ -402,40 +446,42 @@ class BookingList:
         rate_win.grab_set()
 
         tk.Label(rate_win, text="How was your ride?",
-                 font=("Helvetica", 13, "bold"), bg=BG_DARK, fg=GOLD).pack(pady=(16, 4))
+                 font=("Helvetica", 13, "bold"), bg=BG_DARK, fg=GOLD,
+                 ).pack(pady=(16, 4))
         tk.Label(rate_win, text=f"Driver: {booking.driver.name}",
                  font=("Helvetica", 10), bg=BG_DARK, fg=TEXT_GRAY).pack()
 
-        star_var = tk.IntVar(value=5)
-        star_frame = tk.Frame(rate_win, bg=BG_DARK)
+        star_var    = tk.IntVar(value=5)
+        star_frame  = tk.Frame(rate_win, bg=BG_DARK)
         star_frame.pack(pady=12)
-
         star_labels = []
+
         def update_stars(selected):
             star_var.set(selected)
             for i, lbl in enumerate(star_labels):
                 lbl.config(fg=GOLD if i < selected else TEXT_GRAY)
 
         for i in range(1, 6):
-            lbl = tk.Label(star_frame, text="★", font=("Helvetica", 28),
+            lbl = tk.Label(star_frame, text="★", font=("Helvetica", 26),
                            bg=BG_DARK, fg=GOLD, cursor="hand2")
             lbl.pack(side="left", padx=2)
             lbl.bind("<Button-1>", lambda e, s=i: update_stars(s))
             lbl.bind("<Enter>",    lambda e, s=i: update_stars(s))
             star_labels.append(lbl)
-
         update_stars(5)
 
         tk.Label(rate_win, text="Leave a comment (optional):",
                  font=("Helvetica", 9), bg=BG_DARK, fg=TEXT_GRAY).pack()
-        feedback_entry = tk.Entry(rate_win, font=("Helvetica", 10), width=32,
-                                  bg=BG_CARD, fg=TEXT_WHITE, insertbackground=GOLD,
-                                  relief="flat", bd=4)
+        feedback_entry = tk.Entry(
+            rate_win, font=("Helvetica", 10), width=32,
+            bg=BG_CARD, fg=TEXT_WHITE, insertbackground=GOLD,
+            relief="flat", bd=4,
+        )
         feedback_entry.pack(padx=20, pady=(4, 8))
 
         def submit():
-            rating = star_var.get()
-            msg = self.service.rate_booking(booking.booking_id, self.account.username, rating)
+            rating  = star_var.get()
+            msg     = self.service.rate_booking(booking.booking_id, self.account.username, rating)
             if booking.driver.driver_id and booking.driver.driver_id != "unassigned":
                 self.driver_manager.update_driver_rating(booking.driver.driver_id, rating)
             comment = feedback_entry.get().strip()
@@ -446,26 +492,29 @@ class BookingList:
             messagebox.showinfo("Thank you!", msg)
             self.refresh()
 
-        tk.Button(rate_win, text="Submit Rating",
-                  font=("Helvetica", 11, "bold"), bg=GOLD, fg=BG_DARK,
-                  relief="flat", padx=16, pady=8, cursor="hand2",
-                  command=submit).pack(pady=(4, 16))
+        tk.Button(
+            rate_win, text="Submit Rating",
+            font=("Helvetica", 11, "bold"), bg=GOLD, fg=BG_DARK,
+            relief="flat", padx=16, pady=8, cursor="hand2",
+            activebackground=MAROON_LT, activeforeground=GOLD,
+            command=submit,
+        ).pack(pady=(4, 16))
 
     def _track(self, booking):
         from gui.tracking_window import TrackingWindow
         TrackingWindow(self.frame, booking, on_complete_callback=lambda: None)
 
     def _show_receipt(self, booking):
-        surge_txt  = f"\n🚀 Surge x{booking.surge} applied" if booking.surge > 1.0 else ""
-        promo_txt  = f"\n🎟️ Promo {booking.promo_code}: -₱{booking.discount:.2f}" if getattr(booking, 'promo_code', None) else ""
+        surge_txt  = f"\n🚀  Surge ×{booking.surge} applied" if booking.surge > 1.0 else ""
+        promo_txt  = f"\n🎟️  Promo {booking.promo_code}: −₱{booking.discount:.2f}" if getattr(booking, "promo_code", None) else ""
         rating_txt = f"{'⭐' * booking.rating}" if booking.rating else "Not rated"
-        pax_txt    = f"\n👥 Passengers: {getattr(booking, 'passengers', 1)}"
-        notes_txt  = f"\n📝 Notes: {booking.notes}" if getattr(booking, 'notes', '') else ""
+        pax_txt    = f"\n👥  Passengers: {getattr(booking, 'passengers', 1)}"
+        notes_txt  = f"\n📝  Notes: {booking.notes}" if getattr(booking, "notes", "") else ""
 
         receipt = (
-            f"{'='*36}\n"
-            f"       RIDE RECEIPT\n"
-            f"{'='*36}\n"
+            f"{'═'*36}\n"
+            f"         RIDE RECEIPT\n"
+            f"{'═'*36}\n"
             f"Booking ID : #{booking.booking_id}\n"
             f"Date       : {booking.date}\n"
             f"{'─'*36}\n"
@@ -479,7 +528,7 @@ class BookingList:
             f"{surge_txt}{promo_txt}{notes_txt}\n"
             f"Status     : {booking.status}\n"
             f"Rating     : {rating_txt}\n"
-            f"{'='*36}"
+            f"{'═'*36}"
         )
         messagebox.showinfo(f"Receipt — Booking #{booking.booking_id}", receipt)
 
@@ -497,7 +546,7 @@ class BookingList:
         path = filedialog.asksaveasfilename(
             defaultextension=".txt",
             filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
-            title="Save Bookings Export"
+            title="Save Bookings Export",
         )
         if not path:
             return
@@ -505,8 +554,7 @@ class BookingList:
         lines = [
             "PUP RIDES — BOOKING EXPORT",
             f"User: {self.account.username}",
-            "=" * 40,
-            ""
+            "=" * 40, "",
         ]
         for b in filtered:
             lines.append(f"Booking #{b.booking_id}")
@@ -541,78 +589,77 @@ class BookingList:
     def _build_stats_ui(self):
         stats = self.service.get_user_stats(self.account.username)
 
-        canvas    = tk.Canvas(self.content_frame, bg=BG_DARK, highlightthickness=0)
-        scrollbar = tk.Scrollbar(self.content_frame, orient="vertical", command=canvas.yview)
-        canvas.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
+        canvas, inner = _make_scrollable(self.content_frame)
 
-        inner = tk.Frame(canvas, bg=BG_DARK)
-        win   = canvas.create_window((0, 0), window=inner, anchor="nw")
-        inner.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.bind("<Configure>", lambda e: canvas.itemconfig(win, width=e.width))
-
-        tk.Label(inner, text="📊 My Ride Statistics",
-                 font=("Helvetica", 15, "bold"), bg=BG_DARK, fg=GOLD).pack(pady=(16, 8))
+        tk.Label(inner, text="📊  My Ride Statistics",
+                 font=("Helvetica", 14, "bold"), bg=BG_DARK, fg=GOLD,
+                 ).pack(pady=(14, 8))
 
         # ── Summary cards ─────────────────────────────────────────────────────
         cards_frame = tk.Frame(inner, bg=BG_DARK)
-        cards_frame.pack(fill="x", padx=12, pady=4)
+        cards_frame.pack(fill="x", padx=10, pady=4)
 
         card_data = [
-            ("Total Bookings", stats["total_bookings"], GOLD,       "🗂️"),
-            ("Completed",      stats["completed"],      "#90EE90",  "✅"),
-            ("Cancelled",      stats["cancelled"],      RED,        "❌"),
-            ("Active / Sched", stats["active"],         GOLD,       "🚗"),
+            ("Total Bookings", stats["total_bookings"], GOLD,      "🗂️"),
+            ("Completed",      stats["completed"],      "#90EE90", "✅"),
+            ("Cancelled",      stats["cancelled"],      RED,       "❌"),
+            ("Active / Sched", stats["active"],         GOLD,      "🚗"),
         ]
         for col, (label, value, color, icon) in enumerate(card_data):
-            cf = tk.Frame(cards_frame, bg=BG_CARD, padx=14, pady=10)
-            cf.grid(row=0, column=col, padx=6, pady=4, sticky="nsew")
+            cf = tk.Frame(cards_frame, bg=BG_CARD, padx=12, pady=10)
+            cf.grid(row=0, column=col, padx=5, pady=4, sticky="nsew")
             cards_frame.columnconfigure(col, weight=1)
-            tk.Label(cf, text=icon, font=("Helvetica", 18), bg=BG_CARD, fg=color).pack()
-            tk.Label(cf, text=str(value), font=("Helvetica", 22, "bold"), bg=BG_CARD, fg=color).pack()
-            tk.Label(cf, text=label, font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY).pack()
+            tk.Label(cf, text=icon,    font=("Helvetica", 16), bg=BG_CARD, fg=color).pack()
+            tk.Label(cf, text=str(value), font=("Helvetica", 20, "bold"), bg=BG_CARD, fg=color).pack()
+            tk.Label(cf, text=label,   font=("Helvetica", 9),  bg=BG_CARD, fg=TEXT_GRAY).pack()
 
         # ── Spending summary ──────────────────────────────────────────────────
-        spend_frame = tk.Frame(inner, bg=BG_CARD, padx=16, pady=12)
-        spend_frame.pack(fill="x", padx=12, pady=8)
-        tk.Label(spend_frame, text="💰 Spending Summary",
-                 font=("Helvetica", 12, "bold"), bg=BG_CARD, fg=GOLD).pack(anchor="w", pady=(0, 6))
+        tk.Frame(inner, bg=DIVIDER, height=1).pack(fill="x", padx=10, pady=6)
+        spend_frame = tk.Frame(inner, bg=BG_CARD, padx=14, pady=12)
+        spend_frame.pack(fill="x", padx=10, pady=(0, 4))
+        tk.Label(spend_frame, text="💰  Spending Summary",
+                 font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=GOLD,
+                 ).pack(anchor="w", pady=(0, 6))
 
         avg_rating = stats.get("avg_rating_given")
         rating_txt = f"{'⭐' * round(avg_rating)} ({avg_rating:.1f})" if avg_rating else "N/A"
 
-        rows = [
+        for label, value in [
             ("Total Spent",      f"₱{stats['total_spent']:.2f}"),
             ("Average Fare",     f"₱{stats['avg_fare']:.2f}"),
             ("Total Distance",   f"{stats['total_distance']:.1f} km"),
             ("Avg Rating Given", rating_txt),
-        ]
-        for label, value in rows:
+        ]:
             row = tk.Frame(spend_frame, bg=BG_CARD)
             row.pack(fill="x", pady=2)
-            tk.Label(row, text=label, font=("Helvetica", 10), bg=BG_CARD, fg=TEXT_GRAY).pack(side="left")
-            tk.Label(row, text=value, font=("Helvetica", 10, "bold"), bg=BG_CARD, fg=TEXT_WHITE).pack(side="right")
+            tk.Label(row, text=label, font=("Helvetica", 10),
+                     bg=BG_CARD, fg=TEXT_GRAY).pack(side="left")
+            tk.Label(row, text=value, font=("Helvetica", 10, "bold"),
+                     bg=BG_CARD, fg=TEXT_WHITE).pack(side="right")
 
         # ── By vehicle breakdown ──────────────────────────────────────────────
         by_v = stats.get("by_vehicle", {})
         if by_v:
-            veh_frame = tk.Frame(inner, bg=BG_CARD, padx=16, pady=12)
-            veh_frame.pack(fill="x", padx=12, pady=4)
-            tk.Label(veh_frame, text="🚗 Spending by Vehicle",
-                     font=("Helvetica", 12, "bold"), bg=BG_CARD, fg=GOLD).pack(anchor="w", pady=(0, 6))
+            tk.Frame(inner, bg=DIVIDER, height=1).pack(fill="x", padx=10, pady=6)
+            veh_frame = tk.Frame(inner, bg=BG_CARD, padx=14, pady=12)
+            veh_frame.pack(fill="x", padx=10, pady=(0, 14))
+            tk.Label(veh_frame, text="🚗  Spending by Vehicle",
+                     font=("Helvetica", 11, "bold"), bg=BG_CARD, fg=GOLD,
+                     ).pack(anchor="w", pady=(0, 6))
+
             total_v = sum(by_v.values()) or 1
-            vehicle_colors = {"Car": GOLD, "Van": "#87CEEB", "Bike": "#90EE90"}
+            veh_colors = {"Car": GOLD, "Van": "#87CEEB", "Bike": "#90EE90"}
             for vname, amount in by_v.items():
-                pct = amount / total_v * 100
-                row = tk.Frame(veh_frame, bg=BG_CARD)
+                pct   = amount / total_v * 100
+                color = veh_colors.get(vname, TEXT_WHITE)
+                row   = tk.Frame(veh_frame, bg=BG_CARD)
                 row.pack(fill="x", pady=3)
-                color = vehicle_colors.get(vname, TEXT_WHITE)
-                tk.Label(row, text=vname, font=("Helvetica", 10), bg=BG_CARD, fg=color, width=6, anchor="w").pack(side="left")
-                bar_bg = tk.Frame(row, bg=BG_DARK, height=14, width=200)
+                tk.Label(row, text=vname, font=("Helvetica", 10),
+                         bg=BG_CARD, fg=color, width=6, anchor="w").pack(side="left")
+                bar_bg = tk.Frame(row, bg=BG_DARK, height=10, width=190)
                 bar_bg.pack(side="left", padx=8)
                 bar_bg.pack_propagate(False)
-                fill_w = max(4, int(pct / 100 * 200))
-                tk.Frame(bar_bg, bg=color, height=14, width=fill_w).place(x=0, y=0)
-                tk.Label(row, text=f"₱{amount:.2f} ({pct:.0f}%)",
+                fill_w = max(4, int(pct / 100 * 190))
+                tk.Frame(bar_bg, bg=color, height=10, width=fill_w).place(x=0, y=0)
+                tk.Label(row, text=f"₱{amount:.2f}  ({pct:.0f}%)",
                          font=("Helvetica", 9), bg=BG_CARD, fg=TEXT_GRAY).pack(side="left")
