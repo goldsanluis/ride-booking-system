@@ -13,28 +13,28 @@ from tkinter import messagebox
 from file_handler.account_manager import AccountManager
 from models.account import Account
 
-BG_APP      = "#1a0000"
-BG_SURFACE  = "#800000"
-BG_FIELD    = "#6b0000"
-MAROON      = "#800000"
-MAROON_LT   = "#990000"
-GOLD        = "#FFD700"
-GOLD_DIM    = "#FFC200"
-TEXT_WHITE  = "#FFFFFF"
-TEXT_MUTED  = "#FFEECC"
-RED_ERR     = "#FF6B6B"
-DIVIDER     = "#990000"
-
+# ── PUP Maroon, Gold & White Design System ───────────────────────────────────
+BG_APP      = "#1a0000"   # Deep dark maroon background
+BG_SURFACE  = "#800000"   # Maroon card surface
+BG_FIELD    = "#6b0000"   # Input field background
+MAROON      = "#800000"   # PUP Maroon
+MAROON_LT   = "#990000"   # Lighter maroon for hover
+GOLD        = "#FFD700"   # PUP Gold
+GOLD_BRIGHT = "#FFD700"   # Gold highlight
+GOLD_DIM    = "#FFD700"   # Gold subtext
+TEXT_WHITE  = "#FFFFFF"   # White text
+TEXT_MUTED  = "#FFFFFF"   # White subtext
+RED_ERR     = "#FF6B6B"   # Error red
+DIVIDER     = "#990000"   # Divider line
 
 class LoginWindow:
-    def __init__(self, on_back=None):
+    def __init__(self):
         self.root = tk.Tk()
         self.root.title("PUP Rides — Login")
-        self.root.geometry("440x680")
+        self.root.geometry("420x600")
         self.root.configure(bg=BG_APP)
         self.root.resizable(False, False)
 
-        self.on_back           = on_back
         self.account_manager   = AccountManager()
         self.logged_in_account = None
         self._show_login_pw    = False
@@ -45,33 +45,41 @@ class LoginWindow:
     # ── Layout ────────────────────────────────────────────────────────────────
 
     def _setup_ui(self):
-        # Top accent
-        tk.Frame(self.root, bg=GOLD, height=4).pack(fill="x")
-
-        # Hero header
-        header = tk.Frame(self.root, bg=MAROON, padx=28, pady=22)
+        # Top brand strip (improved hero header)
+        header = tk.Frame(self.root, bg=MAROON, padx=18, pady=18)
         header.pack(fill="x")
 
-        row = tk.Frame(header, bg=MAROON)
-        row.pack(fill="x")
+        # Header accent layers for a more premium look
+        top_glow = tk.Frame(header, bg=BG_APP, height=6)
+        top_glow.pack(fill="x", pady=(0, 10))
 
-        tk.Label(row, text="🎓", font=("Helvetica", 36),
+        title_row = tk.Frame(header, bg=MAROON)
+        title_row.pack(fill="x")
+
+        tk.Label(title_row, text="🎓", font=("Helvetica", 34),
                  bg=MAROON, fg=GOLD).pack(side="left")
 
-        txt = tk.Frame(row, bg=MAROON)
-        txt.pack(side="left", padx=(14, 0))
-        tk.Label(txt, text="PUP Rides",
-                 font=("Helvetica", 22, "bold"), bg=MAROON, fg=GOLD,
-                 anchor="w").pack(anchor="w")
-        tk.Label(txt, text="Polytechnic University of the Philippines",
-                 font=("Helvetica", 9), bg=MAROON, fg=TEXT_MUTED,
-                 anchor="w").pack(anchor="w", pady=(3, 0))
+        txt_wrap = tk.Frame(title_row, bg=MAROON)
+        txt_wrap.pack(side="left", fill="x", expand=True, padx=(14, 0))
 
-        tk.Frame(self.root, bg=GOLD, height=2).pack(fill="x")
+        tk.Label(txt_wrap, text="PUP Rides",
+                 font=("Helvetica", 24, "bold"), bg=MAROON, fg=GOLD,
+                 justify="left").pack(anchor="w")
 
-        # Card
-        self.card = tk.Frame(self.root, bg=BG_SURFACE, padx=32, pady=26)
-        self.card.pack(fill="both", expand=True, padx=20, pady=18)
+        tk.Label(txt_wrap, text="Ride Booking System",
+                 font=("Helvetica", 10), bg=MAROON, fg=TEXT_MUTED,
+                 justify="left").pack(anchor="w", pady=(4, 0))
+
+        tk.Label(header,
+                 text="Polytechnic University of the Philippines",
+                 font=("Helvetica", 8), bg=MAROON, fg=GOLD_DIM).pack(anchor="w", pady=(10, 0))
+
+        # Gold accent line
+        tk.Frame(self.root, bg=GOLD, height=3).pack(fill="x", pady=(10, 0))
+
+        # Card area (cleaner spacing)
+        self.card = tk.Frame(self.root, bg=BG_SURFACE, padx=34, pady=28)
+        self.card.pack(fill="both", expand=True, padx=22, pady=18)
 
         self._show_login()
 
@@ -81,38 +89,48 @@ class LoginWindow:
 
     # ── Shared helpers ────────────────────────────────────────────────────────
 
-    def _section_title(self, title, subtitle):
-        tk.Label(self.card, text=title,
-                 font=("Helvetica", 15, "bold"), bg=BG_SURFACE, fg=TEXT_WHITE,
-                 anchor="w").pack(anchor="w")
-        tk.Label(self.card, text=subtitle,
-                 font=("Helvetica", 9), bg=BG_SURFACE, fg=TEXT_MUTED,
-                 anchor="w").pack(anchor="w", pady=(2, 10))
-        tk.Frame(self.card, bg=GOLD, height=1).pack(fill="x", pady=(0, 10))
+    def _label(self, parent, text):
+        tk.Label(parent, text=text, font=("Helvetica", 10, "bold"),
+                 bg=BG_SURFACE, fg=GOLD_DIM).pack(anchor="w", pady=(8, 2))
 
-    def _lbl(self, text):
-        tk.Label(self.card, text=text,
-                 font=("Helvetica", 9, "bold"), bg=BG_SURFACE, fg=GOLD_DIM,
-                 anchor="w").pack(anchor="w", pady=(8, 2))
+    def _entry(self, parent, show=None):
+        # Rounded-looking input emulation: outer accent border + inner surface
+        wrap = tk.Frame(parent, bg=GOLD, pady=1)
+        wrap.pack(fill="x", pady=(0, 6))
 
-    def _entry(self, show=None):
-        outer = tk.Frame(self.card, bg=DIVIDER, pady=1)
-        outer.pack(fill="x", pady=(0, 2))
-        inner = tk.Frame(outer, bg=BG_FIELD, padx=10, pady=7)
+        inner = tk.Frame(wrap, bg=BG_FIELD, padx=12, pady=7)
         inner.pack(fill="x")
-        e = tk.Entry(inner, font=("Helvetica", 10), bg=BG_FIELD, fg=TEXT_WHITE,
-                     insertbackground=GOLD, relief="flat", bd=0, show=show or "")
+
+        e = tk.Entry(
+            inner,
+            font=("Helvetica", 11),
+            bg=BG_FIELD,
+            fg=TEXT_WHITE,
+            insertbackground=GOLD,
+            relief="flat",
+            bd=0,
+            show=show or "",
+        )
         e.pack(fill="x")
         return e
 
-    def _pw_row(self, entry_attr, flag_attr):
-        outer = tk.Frame(self.card, bg=DIVIDER, pady=1)
-        outer.pack(fill="x", pady=(0, 2))
-        inner = tk.Frame(outer, bg=BG_FIELD, padx=10, pady=6)
+
+    def _pw_row(self, parent, entry_attr, flag_attr):
+        wrap = tk.Frame(parent, bg=GOLD_DIM, pady=1)
+        wrap.pack(fill="x", pady=(0, 6))
+        inner = tk.Frame(wrap, bg=BG_FIELD, padx=10, pady=6)
         inner.pack(fill="x")
 
-        entry = tk.Entry(inner, font=("Helvetica", 10), bg=BG_FIELD, fg=TEXT_WHITE,
-                         insertbackground=GOLD, relief="flat", bd=0, show="●")
+        entry = tk.Entry(
+            inner,
+            font=("Helvetica", 11),
+            bg=BG_FIELD,
+            fg=TEXT_WHITE,
+            insertbackground=GOLD,
+            relief="flat",
+            bd=0,
+            show="●",
+        )
         entry.pack(side="left", fill="x", expand=True)
         setattr(self, entry_attr, entry)
 
@@ -122,35 +140,49 @@ class LoginWindow:
             entry.config(show="" if val else "●")
             btn.config(text="🙈" if val else "👁")
 
-        btn = tk.Button(inner, text="👁", font=("Helvetica", 9),
-                        bg=BG_FIELD, fg=GOLD_DIM, relief="flat", bd=0,
-                        padx=4, cursor="hand2",
-                        activebackground=BG_FIELD, activeforeground=GOLD,
-                        command=toggle)
-        btn.pack(side="left", padx=(6, 0))
+        # Eye toggle styled like a small gold pill (still flat for Tk look)
+        btn = tk.Button(
+            inner,
+            text="👁",
+            font=("Helvetica", 10, "bold"),
+            bg=GOLD,
+            fg=BG_APP,
+            relief="flat",
+            bd=0,
+            padx=8,
+            pady=4,
+            cursor="hand2",
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=toggle,
+        )
+        btn.pack(side="left", padx=(8, 0))
 
-    def _error_lbl(self):
-        lbl = tk.Label(self.card, text="", font=("Helvetica", 9),
-                       bg=BG_SURFACE, fg=RED_ERR, wraplength=340, justify="left")
-        lbl.pack(anchor="w", pady=(4, 0))
+
+    def _error_label(self, parent):
+        lbl = tk.Label(parent, text="", font=("Helvetica", 9),
+                       bg=BG_SURFACE, fg=RED_ERR, wraplength=320, justify="left")
+        lbl.pack(anchor="w", pady=(2, 0))
         return lbl
 
-    def _btn_primary(self, text, cmd):
-        tk.Button(self.card, text=text,
-                  font=("Helvetica", 11, "bold"), bg=GOLD, fg=BG_APP,
-                  relief="flat", padx=10, pady=11, cursor="hand2",
-                  activebackground=MAROON_LT, activeforeground=GOLD,
-                  command=cmd).pack(fill="x", pady=(16, 4))
+    def _btn_primary(self, parent, text, cmd):
+        f = tk.Frame(parent, bg=GOLD, pady=1)
+        f.pack(fill="x", pady=(20, 6))
+        tk.Button(
+            f,
+            text=text,
+            font=("Helvetica", 12, "bold"),
+            bg=GOLD,
+            fg=BG_APP,
+            relief="flat",
+            padx=10,
+            pady=12,
+            cursor="hand2",
+            activebackground=BG_APP,
+            activeforeground=GOLD,
+            command=cmd,
+        ).pack(fill="x")
 
-    def _btn_secondary(self, text, cmd):
-        tk.Button(self.card, text=text,
-                  font=("Helvetica", 10), bg=BG_FIELD, fg=TEXT_WHITE,
-                  relief="flat", padx=10, pady=8, cursor="hand2",
-                  activebackground=MAROON_LT, activeforeground=GOLD,
-                  command=cmd).pack(fill="x", pady=(0, 4))
-
-    def _divider(self):
-        tk.Frame(self.card, bg=DIVIDER, height=1).pack(fill="x", pady=10)
 
     # ── Login screen ──────────────────────────────────────────────────────────
 
@@ -158,26 +190,32 @@ class LoginWindow:
         self._clear_card()
         self._show_login_pw = False
 
-        self._section_title("Welcome back", "Sign in to your account")
+        tk.Label(self.card, text="Welcome back",
+                 font=("Helvetica", 16, "bold"), bg=BG_SURFACE, fg=TEXT_WHITE).pack(anchor="w")
+        tk.Label(self.card, text="Sign in to your account",
+                 font=("Helvetica", 10), bg=BG_SURFACE, fg=TEXT_MUTED).pack(anchor="w", pady=(2, 12))
 
-        self._lbl("Username")
-        self.username_entry = self._entry()
+        tk.Frame(self.card, bg=DIVIDER, height=1).pack(fill="x", pady=(0, 12))
 
-        self._lbl("Password")
-        self._pw_row("password_entry", "_show_login_pw")
+        self._label(self.card, "Username")
+        self.username_entry = self._entry(self.card)
 
-        self.login_err = self._error_lbl()
-        self._btn_primary("Sign In  →", self.login)
+        self._label(self.card, "Password")
+        self._pw_row(self.card, "password_entry", "_show_login_pw")
 
-        self._divider()
+        self.login_err = self._error_label(self.card)
+        self._btn_primary(self.card, "Sign In →", self.login)
+
+        sep = tk.Frame(self.card, bg=BG_SURFACE)
+        sep.pack(fill="x", pady=12)
+        tk.Frame(sep, bg=DIVIDER, height=1).pack(fill="x")
 
         tk.Label(self.card, text="Don't have an account?",
-                 font=("Helvetica", 9), bg=BG_SURFACE, fg=TEXT_MUTED).pack()
-        self._btn_secondary("Create Account", self._show_register)
-
-        if self.on_back:
-            tk.Frame(self.card, bg=DIVIDER, height=1).pack(fill="x", pady=(8, 4))
-            self._btn_secondary("← Back to Main Menu", self._go_back)
+                 font=("Helvetica", 10), bg=BG_SURFACE, fg=TEXT_MUTED).pack()
+        tk.Button(self.card, text="Create account",
+                  font=("Helvetica", 10, "bold"), bg=BG_SURFACE, fg=GOLD_BRIGHT,
+                  relief="flat", cursor="hand2", activeforeground=GOLD,
+                  activebackground=BG_SURFACE, command=self._show_register).pack()
 
         self.root.bind("<Return>", lambda e: self.login())
         self.username_entry.focus_set()
@@ -188,32 +226,34 @@ class LoginWindow:
         self._clear_card()
         self._show_reg_pw = False
 
-        self._section_title("Create account", "Join PUP Rides today")
+        tk.Label(self.card, text="Create account",
+                 font=("Helvetica", 16, "bold"), bg=BG_SURFACE, fg=TEXT_WHITE).pack(anchor="w")
+        tk.Label(self.card, text="Join PUP Rides today",
+                 font=("Helvetica", 10), bg=BG_SURFACE, fg=TEXT_MUTED).pack(anchor="w", pady=(2, 12))
 
-        self._lbl("Full Name")
-        self.name_entry = self._entry()
+        tk.Frame(self.card, bg=DIVIDER, height=1).pack(fill="x", pady=(0, 12))
 
-        self._lbl("Username")
-        self.reg_username_entry = self._entry()
+        self._label(self.card, "Full Name")
+        self.name_entry = self._entry(self.card)
 
-        self._lbl("Password")
-        self._pw_row("reg_password_entry", "_show_reg_pw")
+        self._label(self.card, "Username")
+        self.reg_username_entry = self._entry(self.card)
 
-        self.reg_err = self._error_lbl()
-        self._btn_primary("Create Account", self.register)
+        self._label(self.card, "Password")
+        self._pw_row(self.card, "reg_password_entry", "_show_reg_pw")
 
-        self._divider()
-        self._btn_secondary("← Back to Sign In", self._show_login)
+        self.reg_err = self._error_label(self.card)
+        self._btn_primary(self.card, "Create Account", self.register)
+
+        tk.Button(self.card, text="← Back to sign in",
+                  font=("Helvetica", 10), bg=BG_SURFACE, fg=GOLD_DIM,
+                  relief="flat", cursor="hand2", activeforeground=GOLD,
+                  activebackground=BG_SURFACE, command=self._show_login).pack(pady=(10, 0))
 
         self.root.bind("<Return>", lambda e: self.register())
         self.name_entry.focus_set()
 
     # ── Actions ───────────────────────────────────────────────────────────────
-
-    def _go_back(self):
-        self.root.destroy()
-        if self.on_back:
-            self.on_back()
 
     def login(self):
         username = self.username_entry.get().strip()
@@ -259,6 +299,7 @@ class LoginWindow:
         self.root.mainloop()
         return self.logged_in_account
 
+    # Legacy alias kept for backward compat
     def setup_ui(self):
         pass
 
