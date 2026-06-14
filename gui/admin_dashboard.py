@@ -87,40 +87,110 @@ class AdminDashboard:
 
     # ── Tab bar ───────────────────────────────────────────────────────────────
     def _build_tabs(self):
-        self.tab_bar = tk.Frame(self.root, bg=BG_CARD)
+        self.tab_bar = tk.Frame(self.root, bg=BG_CARD, height=50)
         self.tab_bar.pack(fill="x")
 
-        tabs = [("overview", "📊 Overview"), ("users", "👥 Users"),
-                ("bookings", "📋 Bookings"), ("drivers", "🚕 Drivers"),
-                ("promos", "🎟️ Promos"), ("notify", "🔔 Broadcast")]
+        tabs = [
+            ("overview", "📊 Overview"),
+            ("users", "👥 Users"),
+            ("bookings", "📋 Bookings"),
+            ("drivers", "🚕 Drivers"),
+            ("promos", "🎟️ Promos"),
+            ("notify", "🔔 Broadcast")
+        ]
+
         self.tab_btns = {}
+
         for key, label in tabs:
-            btn = tk.Button(self.tab_bar, text=label,
-                            font=("Helvetica", 10, "bold"), relief="flat",
-                            padx=16, pady=8, cursor="hand2",
-                            command=lambda k=key: self._switch(k))
+            btn = tk.Button(
+                self.tab_bar,
+                text=label,
+                font=("Helvetica", 10, "bold"),
+                bg=BG_CARD,
+                fg=GRAY,
+                activebackground=BG_CARD,
+                activeforeground=WHITE,
+                relief="flat",
+                bd=0,
+                padx=20,
+                pady=12,
+                cursor="hand2",
+                command=lambda k=key: self._switch(k)
+            )
+
             btn.pack(side="left")
             self.tab_btns[key] = btn
+
+        # Active tab underline
+        self.indicator = tk.Frame(
+            self.tab_bar,
+            bg=GOLD,
+            height=3
+        )
 
         self.content = tk.Frame(self.root, bg=BG_DARK)
         self.content.pack(fill="both", expand=True)
 
-    def _switch(self, tab: str):
-        self._active_tab = tab
-        for k, btn in self.tab_btns.items():
-            btn.config(bg=BG_DARK if k == tab else BG_CARD,
-                       fg=GOLD if k == tab else GRAY)
-        for w in self.content.winfo_children():
-            w.destroy()
-        {
-            "overview": self._show_overview,
-            "users":    self._show_users,
-            "bookings": self._show_bookings,
-            "drivers":  self._show_drivers,
-            "promos":   self._show_promos,
-            "notify":   self._show_notify,
-        }[tab]()
+        # Set initial active tab
+        self.root.after(100, lambda: self._switch_style("overview"))
 
+    def _switch(self, tab):
+
+        old_tab = self._active_tab
+        self._active_tab = tab
+
+        old_btn = self.tab_btns[old_tab]
+        new_btn = self.tab_btns[tab]
+
+        self.tab_bar.update_idletasks()
+
+        start_x = old_btn.winfo_x()
+        end_x = new_btn.winfo_x()
+        target_w = new_btn.winfo_width()
+
+        def animate():
+            current_x = self.indicator.winfo_x()
+
+            if abs(current_x - end_x) < 3:
+
+                self.indicator.place(
+                    x=end_x,
+                    y=self.tab_bar.winfo_height() - 3,
+                    width=target_w
+                )
+
+                # Update tab colors
+                for k, btn in self.tab_btns.items():
+                    btn.config(
+                        fg=GOLD if k == tab else GRAY
+                    )
+
+                # Load content AFTER animation
+                for w in self.content.winfo_children():
+                    w.destroy()
+
+                {
+                    "overview": self._show_overview,
+                    "users": self._show_users,
+                    "bookings": self._show_bookings,
+                    "drivers": self._show_drivers,
+                    "promos": self._show_promos,
+                    "notify": self._show_notify,
+                }[tab]()
+
+                return
+
+            current_x += (end_x - current_x) / 4
+
+            self.indicator.place(
+                x=current_x,
+                y=self.tab_bar.winfo_height() - 3,
+                width=target_w
+            )
+
+            self.root.after(10, animate)
+
+        animate()
     # ── Overview ──────────────────────────────────────────────────────────────
     def _show_overview(self):
         self._switch_style("overview")
@@ -377,10 +447,12 @@ class AdminDashboard:
         canvas.bind("<Configure>", lambda e: canvas.itemconfig(win_id, width=e.width))
         return inner
 
-    def _switch_style(self, active: str):
+    def _switch_style(self, active):
         for k, btn in self.tab_btns.items():
-            btn.config(bg=BG_DARK if k == active else BG_CARD,
-                       fg=GOLD if k == active else GRAY)
+            btn.config(
+                fg=GOLD if k == active else GRAY,
+                bg=BG_CARD
+            )
 
     def run(self):
         self.root.mainloop()
