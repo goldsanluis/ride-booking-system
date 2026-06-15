@@ -178,5 +178,9 @@ class PaymentMethodsWindow:
 
     def _remove(self, idx):
         if messagebox.askyesno("Remove", "Remove this payment method?", parent=self.win):
-            ps.remove_method(self.username, idx)
-            self._load()
+            methods = ps.get_methods(self.username)
+            non_wallet = [m for m in methods if m["type"] != "wallet"]
+            if 0 <= idx < len(non_wallet):
+                global_idx = methods.index(non_wallet[idx])
+                ps.remove_method(self.username, global_idx)
+                self._load()

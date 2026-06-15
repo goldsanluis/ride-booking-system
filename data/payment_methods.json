@@ -7,13 +7,8 @@
     },
     {
       "type": "gcash",
-      "label": "gold",
+      "label": "Gold",
       "default": true
-    },
-    {
-      "type": "gcash",
-      "label": "hi",
-      "default": false
     }
   ]
 }
