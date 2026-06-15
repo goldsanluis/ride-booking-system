@@ -195,14 +195,19 @@ class BookingForm:
         pax_frame = tk.Frame(inner, bg=BG_APP)
         pax_frame.pack(fill="x", pady=(0, 4))
         self.passengers_var = tk.IntVar(value=1)
+        self.pax_buttons = []
         for n in range(1, 11):
-            tk.Radiobutton(
+            rb = tk.Radiobutton(
                 pax_frame, text=str(n),
                 variable=self.passengers_var, value=n,
                 bg=BG_APP, fg=TEXT_WHITE, selectcolor=MAROON_LT,
                 activebackground=BG_APP, activeforeground=GOLD,
                 font=("Helvetica", 10),
-            ).pack(side="left", padx=2)
+                command=self._update_estimate,
+            )
+            rb.pack(side="left", padx=2)
+            self.pax_buttons.append(rb)
+        self._sync_pax_buttons()
 
         # ── Notes ──────────────────────────────────────────────────────────────
         self._lbl("Notes / Special Instructions  (optional)")
@@ -325,25 +330,12 @@ class BookingForm:
 
         # ── Payment method ─────────────────────────────────────────────────────
         tk.Frame(inner, bg=DIVIDER, height=1).pack(fill="x", pady=8)
-        pm_frame = tk.Frame(inner, bg=MAROON, padx=10, pady=8)
-        pm_frame.pack(fill="x")
-        tk.Label(pm_frame, text="💳  Payment Method",
+        self.pm_frame = tk.Frame(inner, bg=MAROON, padx=10, pady=8)
+        self.pm_frame.pack(fill="x")
+        tk.Label(self.pm_frame, text="💳  Payment Method",
                  font=("Helvetica", 10, "bold"), bg=MAROON, fg=GOLD,
                  ).pack(anchor="w")
-
-        from services.payment_service import PaymentMethodService
-        ps = PaymentMethodService()
-        methods   = ps.get_methods(self.account.username)
-        self.payment_var = tk.StringVar()
-        default_m = ps.get_default(self.account.username)
-        self.payment_var.set(default_m.get("label", "Ride Wallet"))
-        pm_menu = tk.OptionMenu(pm_frame, self.payment_var, *[m["label"] for m in methods])
-        pm_menu.config(
-            font=("Helvetica", 9), bg=BG_FIELD, fg=TEXT_WHITE,
-            relief="flat", bd=0, highlightthickness=0, activebackground=MAROON_LT,
-        )
-        pm_menu["menu"].config(bg=BG_FIELD, fg=TEXT_WHITE, font=("Helvetica", 9))
-        pm_menu.pack(fill="x", pady=(5, 0))
+        self._refresh_payment_dropdown()
 
         # ── Wallet section (inline — no separate panel needed) ─────────────────
         tk.Frame(inner, bg=GOLD, height=1).pack(fill="x", pady=(12, 0))
@@ -454,6 +446,48 @@ class BookingForm:
         h = datetime.now().hour
         return 1.5 if (7 <= h <= 9) or (17 <= h <= 20) else 1.0
 
+    def _refresh_payment_dropdown(self):
+        """Rebuild the payment method dropdown from the current saved methods."""
+        # Remove old dropdown if it exists
+        for w in self.pm_frame.winfo_children():
+            if isinstance(w, tk.OptionMenu):
+                w.destroy()
+ 
+        from services.payment_service import PaymentMethodService
+        ps        = PaymentMethodService()
+        methods   = ps.get_methods(self.account.username)
+        default_m = ps.get_default(self.account.username)
+ 
+        if not hasattr(self, "payment_var"):
+            self.payment_var = tk.StringVar()
+        self.payment_var.set(default_m.get("label", "Ride Wallet"))
+ 
+        pm_menu = tk.OptionMenu(self.pm_frame, self.payment_var, *[m["label"] for m in methods])
+        pm_menu.config(
+            font=("Helvetica", 9), bg=BG_FIELD, fg=TEXT_WHITE,
+            relief="flat", bd=0, highlightthickness=0, activebackground=MAROON_LT,
+        )
+        pm_menu["menu"].config(bg=BG_FIELD, fg=TEXT_WHITE, font=("Helvetica", 9))
+        pm_menu.pack(fill="x", pady=(5, 0))
+ 
+    def _on_vehicle_change(self):
+        self._sync_pax_buttons()
+        self._update_estimate()
+ 
+    def _sync_pax_buttons(self):
+        caps    = {"Car": 4, "Van": 10, "Bike": 1}
+        max_pax = caps.get(self.vehicle_var.get(), 10)
+ 
+        # If current selection exceeds new cap, reset to 1
+        if self.passengers_var.get() > max_pax:
+            self.passengers_var.set(1)
+ 
+        for i, btn in enumerate(self.pax_buttons, start=1):
+            if i <= max_pax:
+                btn.config(state="normal", fg=TEXT_WHITE)
+            else:
+                btn.config(state="disabled", fg=BG_FIELD)
+ 
     def _update_estimate(self):
         try:
             dist = float(self.distance_entry.get())
@@ -465,11 +499,13 @@ class BookingForm:
             return
 
         vehicle = self.vehicle_var.get()
+        passengers = self.passengers_var.get()
         base  = self._get_base_fare(vehicle, dist)
         surge = self._current_surge()
         gross = base * surge
         net   = max(0.0, gross - self._discount)
 
+        pax_note = f"  ·  {passengers} passenger{'s' if passengers > 1 else ''}"
         surge_text = (
             f"🚀  Surge ×{surge} applied  (+{int((surge - 1) * 100)}%)"
             if surge > 1.0 else "No surge right now ✅"

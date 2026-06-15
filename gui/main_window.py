@@ -173,7 +173,9 @@ class MainWindow:
 
     def _open_payment_methods(self):
         from gui.payment_methods_window import PaymentMethodsWindow
-        PaymentMethodsWindow(self.root, self.account.username)
+        pmw = PaymentMethodsWindow(self.root, self.account.username)
+        self.root.wait_window(pmw.win)
+        self.booking_form._refresh_payment_dropdown()
 
     def _open_about(self):
         from gui.about_window import AboutWindow
