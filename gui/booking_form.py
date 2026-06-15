@@ -154,7 +154,7 @@ class BookingForm:
                 vf, text=v, variable=self.vehicle_var, value=v,
                 bg=BG_APP, fg=TEXT_WHITE, selectcolor=MAROON_LT,
                 activebackground=BG_APP, activeforeground=GOLD,
-                font=("Helvetica", 10), command=self._update_estimate,
+                font=("Helvetica", 10), command=self._on_vehicle_change,
             ).pack(side="left", padx=6)
 
         # ── Route ──────────────────────────────────────────────────────────────
@@ -192,21 +192,10 @@ class BookingForm:
 
         # ── Passengers ─────────────────────────────────────────────────────────
         self._lbl("Passengers")
-        pax_frame = tk.Frame(inner, bg=BG_APP)
-        pax_frame.pack(fill="x", pady=(0, 4))
+        self.pax_frame = tk.Frame(inner, bg=BG_APP)
+        self.pax_frame.pack(fill="x", pady=(0, 4))
         self.passengers_var = tk.IntVar(value=1)
         self.pax_buttons = []
-        for n in range(1, 11):
-            rb = tk.Radiobutton(
-                pax_frame, text=str(n),
-                variable=self.passengers_var, value=n,
-                bg=BG_APP, fg=TEXT_WHITE, selectcolor=MAROON_LT,
-                activebackground=BG_APP, activeforeground=GOLD,
-                font=("Helvetica", 10),
-                command=self._update_estimate,
-            )
-            rb.pack(side="left", padx=2)
-            self.pax_buttons.append(rb)
         self._sync_pax_buttons()
 
         # ── Notes ──────────────────────────────────────────────────────────────
@@ -477,16 +466,31 @@ class BookingForm:
     def _sync_pax_buttons(self):
         caps    = {"Car": 4, "Van": 10, "Bike": 1}
         max_pax = caps.get(self.vehicle_var.get(), 10)
- 
-        # If current selection exceeds new cap, reset to 1
+
         if self.passengers_var.get() > max_pax:
             self.passengers_var.set(1)
- 
-        for i, btn in enumerate(self.pax_buttons, start=1):
-            if i <= max_pax:
-                btn.config(state="normal", fg=TEXT_WHITE)
-            else:
-                btn.config(state="disabled", fg=BG_FIELD)
+
+        # Destroy and recreate — re-enabling disabled Radiobuttons
+        # doesn't reliably repaint the indicator on all platforms.
+        for btn in self.pax_buttons:
+            btn.destroy()
+        self.pax_buttons.clear()
+
+        for n in range(1, 11):
+            enabled = n <= max_pax
+            rb = tk.Radiobutton(
+                self.pax_frame, text=str(n),
+                variable=self.passengers_var, value=n,
+                bg=BG_APP,
+                fg=TEXT_WHITE if enabled else BG_FIELD,
+                selectcolor=MAROON_LT,
+                activebackground=BG_APP, activeforeground=GOLD,
+                font=("Helvetica", 10),
+                state="normal" if enabled else "disabled",
+                command=self._update_estimate,
+            )
+            rb.pack(side="left", padx=2)
+            self.pax_buttons.append(rb)
  
     def _update_estimate(self):
         try:

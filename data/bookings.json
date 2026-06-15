@@ -375,5 +375,28 @@
     "driver_plate": "Unassigned",
     "driver_rating": 0.0,
     "driver_id": "unassigned"
+  },
+  {
+    "booking_id": 17,
+    "user": "gold",
+    "vehicle_type": "Bike",
+    "start_location": "a",
+    "end_location": "b",
+    "distance": 3.0,
+    "total_cost": 44.0,
+    "date": "2026-06-15 13:15:17",
+    "status": "Active",
+    "surge": 1.0,
+    "rating": null,
+    "passengers": 1,
+    "notes": "",
+    "promo_code": null,
+    "discount": 0.0,
+    "scheduled_time": null,
+    "payment_method": "Cash",
+    "driver_name": "Unassigned",
+    "driver_plate": "Unassigned",
+    "driver_rating": 0.0,
+    "driver_id": "unassigned"
   }
 ]

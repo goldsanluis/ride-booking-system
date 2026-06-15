@@ -9,6 +9,11 @@
       "type": "gcash",
       "label": "Gold",
       "default": true
+    },
+    {
+      "type": "maya",
+      "label": "Wonder-Hoy",
+      "default": false
     }
   ]
 }

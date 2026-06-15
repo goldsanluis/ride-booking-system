@@ -14,5 +14,13 @@
     "booking_id": 16,
     "seen": true,
     "timestamp": "2026-06-15 12:00:53"
+  },
+  {
+    "user": "gold",
+    "message": "Booking #17 confirmed! Driver: Unassigned (Unassigned). Total: \u20b144.00",
+    "category": "ride",
+    "booking_id": 17,
+    "seen": true,
+    "timestamp": "2026-06-15 13:15:17"
   }
 ]
