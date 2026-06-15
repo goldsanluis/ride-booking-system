@@ -110,4 +110,21 @@ class PaymentMethodService:
                 return m
         return methods[0] # Fallback to wallet
 
-   
+_service = PaymentMethodService()
+ 
+PAYMENT_ICONS = PaymentMethodService.PAYMENT_ICONS
+ 
+def get_methods(username: str) -> list:
+    return _service.get_methods(username)
+ 
+def add_method(username: str, mtype: str, label: str) -> tuple:
+    return _service.add_method(username, mtype, label)
+ 
+def remove_method(username: str, index: int) -> tuple:
+    return _service.remove_method(username, index)
+ 
+def set_default(username: str, index: int) -> tuple:
+    return _service.set_default(username, index)
+ 
+def get_default(username: str) -> dict:
+    return _service.get_default(username)

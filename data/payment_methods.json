@@ -1,8 +1,18 @@
 {
   "gold": [
     {
+      "type": "wallet",
+      "label": "Ride Wallet",
+      "default": false
+    },
+    {
       "type": "gcash",
       "label": "gold",
+      "default": true
+    },
+    {
+      "type": "gcash",
+      "label": "hi",
       "default": false
     }
   ]

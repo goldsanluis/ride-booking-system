@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "user": "gold",
+    "message": "Booking #16 confirmed! Driver: Unassigned (Unassigned). Total: \u20b156.00",
+    "category": "ride",
+    "booking_id": 16,
+    "seen": true,
+    "timestamp": "2026-06-15 09:39:31"
+  },
+  {
+    "user": "gold",
+    "message": "Ride #16 completed! Please rate your driver Unassigned.",
+    "category": "ride",
+    "booking_id": 16,
+    "seen": true,
+    "timestamp": "2026-06-15 12:00:53"
+  }
+]
